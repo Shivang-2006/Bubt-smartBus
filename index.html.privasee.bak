@@ -1,0 +1,2090 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrivaSee — Digital Privacy Assistant</title>
+  <meta name="description" content="Translate mobile app permission legalese into plain human terms. Dynamic risk scores, anomaly detection, and 1-click privacy hardening.">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+            },
+            slate: {
+              750: '#243247',
+              850: '#141e30',
+              900: '#0f172a',
+              950: '#090d16',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts & FontAwesome CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* Cyber Security Grid & Ambient Atmosphere */
+    .cyber-grid {
+      background-image: linear-gradient(to right, rgba(51, 65, 85, 0.12) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(51, 65, 85, 0.12) 1px, transparent 1px);
+      background-size: 36px 36px;
+    }
+
+    /* Smooth SVG Dial Arc */
+    .gauge-progress-circle {
+      transition: stroke-dashoffset 0.85s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.4s ease;
+    }
+
+    /* Tactile Card Hover */
+    .crisp-card {
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .crisp-card:hover {
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-emerald-500 selection:text-slate-900 relative">
+
+  <!-- Background Ambient Atmosphere -->
+  <div class="fixed inset-0 cyber-grid pointer-events-none z-0"></div>
+  <div class="fixed -top-40 -left-40 w-[30rem] h-[30rem] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+  <div class="fixed top-1/2 -right-40 w-[30rem] h-[30rem] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+  <!-- App Wrapper -->
+  <div class="relative z-10 flex flex-col min-h-screen">
+    
+    <!-- ================= 1. DECLUTTERED CLEAN NAVBAR ================= -->
+    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+        
+        <!-- Brand & Tagline -->
+        <div class="flex items-center space-x-3">
+          <div class="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-400 p-0.5 shadow-lg shadow-emerald-500/20">
+            <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+              <i class="fa-solid fa-shield-halved text-emerald-400 text-lg"></i>
+            </div>
+            <div class="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-slate-900 flex items-center justify-center">
+              <div class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">PrivaSee</span>
+            </div>
+            <p class="text-xs text-slate-400 font-medium">
+              Translate permission legalese into plain human terms
+            </p>
+          </div>
+        </div>
+
+        <!-- Right Side: Interactive Demo Tour & Scoring Rules -->
+        <div class="flex items-center space-x-2.5">
+          <button id="btnRunInteractiveDemo" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border border-emerald-400/40 text-xs font-bold transition shadow-md shadow-emerald-600/20 cursor-pointer active:scale-95" title="Watch 10-second automatic demo">
+            <i class="fa-solid fa-play text-[10px]"></i>
+            <span>▶ 10s Guided Demo</span>
+          </button>
+          
+          <button id="btnOpenMethodology" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 hover:text-white border border-slate-700/80 text-xs font-semibold transition shadow-sm cursor-pointer" title="How PrivaSee calculates risk">
+            <i class="fa-solid fa-circle-question text-emerald-400"></i>
+            <span class="hidden sm:inline">Scoring Rules</span>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Main Workspace Container (Generous Bottom Viewport Padding) -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20 sm:pb-24 space-y-8">
+
+      <!-- ================= 2. STREAMLINED APP SELECTOR ================= -->
+      <section class="space-y-2.5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs font-bold tracking-wider uppercase text-slate-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-shapes text-emerald-400"></i>
+            Select an App to Inspect
+          </h2>
+          <span class="text-xs text-slate-400 hidden sm:inline">Click any app to load its live privacy profile</span>
+        </div>
+
+        <!-- Clean Tactile App Selector Cards (Only Icon, Name, and Standardized Risk Pill) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" id="appSelectorContainer">
+          
+          <!-- App 1: TikTok -->
+          <button data-app="tiktok" class="app-tab-btn group p-4 rounded-2xl border text-center flex flex-col items-center justify-center gap-2 border-slate-800 bg-slate-850 hover:border-slate-700 shadow-md transition-all cursor-pointer">
+            <div class="w-12 h-12 rounded-2xl bg-black flex items-center justify-center text-white border border-slate-700 shadow-sm group-hover:scale-105 transition-transform">
+              <i class="fa-brands fa-tiktok text-rose-400 text-xl"></i>
+            </div>
+            <div class="font-bold text-sm text-slate-100 group-hover:text-emerald-400 transition">TikTok</div>
+            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30">Critical Risk</span>
+          </button>
+
+          <!-- App 2: Instagram -->
+          <button data-app="instagram" class="app-tab-btn group p-4 rounded-2xl border text-center flex flex-col items-center justify-center gap-2 border-slate-800 bg-slate-850 hover:border-slate-700 shadow-md transition-all cursor-pointer">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
+              <i class="fa-brands fa-instagram text-xl"></i>
+            </div>
+            <div class="font-bold text-sm text-slate-100 group-hover:text-emerald-400 transition">Instagram</div>
+            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">Moderate Risk</span>
+          </button>
+
+          <!-- App 3: Flashlight Pro -->
+          <button data-app="flashlight" class="app-tab-btn group p-4 rounded-2xl border text-center flex flex-col items-center justify-center gap-2 border-slate-800 bg-slate-850 hover:border-slate-700 shadow-md transition-all cursor-pointer">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm group-hover:scale-105 transition-transform">
+              <i class="fa-solid fa-bolt text-xl"></i>
+            </div>
+            <div class="font-bold text-sm text-slate-100 group-hover:text-emerald-400 transition">Flashlight Pro</div>
+            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-600 text-white animate-pulse">Critical Risk</span>
+          </button>
+
+          <!-- App 4: Signal Messenger -->
+          <button data-app="signal" class="app-tab-btn group p-4 rounded-2xl border text-center flex flex-col items-center justify-center gap-2 border-slate-800 bg-slate-850 hover:border-slate-700 shadow-md transition-all cursor-pointer">
+            <div class="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
+              <i class="fa-solid fa-comment-sms text-xl"></i>
+            </div>
+            <div class="font-bold text-sm text-slate-100 group-hover:text-emerald-400 transition">Signal</div>
+            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Safe / Low Risk</span>
+          </button>
+
+          <!-- App 5: Custom Paste -->
+          <button data-app="custom" class="app-tab-btn group p-4 rounded-2xl border text-center flex flex-col items-center justify-center gap-2 col-span-2 sm:col-span-1 border-slate-800 bg-slate-850 hover:border-slate-700 shadow-md transition-all cursor-pointer">
+            <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-sm group-hover:scale-105 transition-transform">
+              <i class="fa-solid fa-terminal text-lg"></i>
+            </div>
+            <div class="font-bold text-sm text-slate-100 group-hover:text-emerald-400 transition">Custom Paste</div>
+            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Custom</span>
+          </button>
+
+        </div>
+      </section>
+
+      <!-- Custom Paste Drawer (Visible when Custom tab is selected) -->
+      <section id="customPasteDrawer" class="hidden p-5 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-xl transition-all">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-paste text-emerald-600"></i>
+              Paste Raw Android Permission Declarations
+            </h3>
+            <p class="text-xs text-slate-500">Paste Android permission strings (one per line) to run an immediate plain-English translation audit.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs text-slate-500 font-medium">Test Samples:</span>
+            <button id="btnPresetMalware" class="text-xs px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-medium transition cursor-pointer">
+              <i class="fa-solid fa-bug mr-1"></i> Spyware Calculator
+            </button>
+            <button id="btnPresetFitness" class="text-xs px-2.5 py-1 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200 font-medium transition cursor-pointer">
+              <i class="fa-solid fa-heart-pulse mr-1"></i> Fitness Band
+            </button>
+            <button id="btnClearCustomInput" class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition cursor-pointer">
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <textarea id="customManifestTextarea" rows="4" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs font-mono text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="android.permission.ACCESS_FINE_LOCATION&#10;android.permission.RECORD_AUDIO&#10;android.permission.READ_CONTACTS&#10;android.permission.CAMERA"></textarea>
+        
+        <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <span class="text-[11px] text-slate-500">
+            Accepts full identifiers (<code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700">android.permission.XYZ</code>) or shorthand names (<code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700">RECORD_AUDIO</code>).
+          </span>
+          <button id="btnRunCustomAudit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2 transition cursor-pointer">
+            <i class="fa-solid fa-magnifying-glass-chart"></i>
+            <span>Audit Pasted Permissions</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- App Overview Card + Plain-English "What This Means for You" Summary -->
+      <section id="appOverviewBanner" class="p-5 sm:p-6 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-xl space-y-4">
+        
+        <!-- App Identity Row -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-center space-x-4">
+            <div id="bannerAppIconContainer" class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-sm shrink-0 bg-black text-rose-400">
+              <i id="bannerAppIcon" class="fa-brands fa-tiktok"></i>
+            </div>
+            <div>
+              <div class="flex items-center flex-wrap gap-2">
+                <h3 id="bannerAppName" class="text-xl font-extrabold text-slate-900">TikTok</h3>
+                <span id="bannerCategoryTag" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-bold">Social Media</span>
+                <span id="bannerAnomalyBadge" class="hidden text-xs px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-300 font-bold animate-pulse">
+                  <i class="fa-solid fa-triangle-exclamation mr-1"></i> Suspicious / Spyware Indicator
+                </span>
+              </div>
+              <p id="bannerAppDescription" class="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed font-medium">
+                Short-form video entertainment platform requesting aggressive ambient sensors and biometric markers.
+              </p>
+            </div>
+          </div>
+
+          <!-- Clean Monitored Count (Single Source of Score Truth is the Dial) -->
+          <div class="self-start sm:self-center shrink-0">
+            <span class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
+              <i class="fa-solid fa-list-check text-emerald-600"></i>
+              <span id="bannerPermCount">9 Permissions Monitored</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- ================= PLAIN-ENGLISH "WHAT THIS MEANS FOR YOU" ================= -->
+        <div class="pt-4 border-t border-slate-200">
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold">
+                <i class="fa-solid fa-user-shield"></i>
+              </div>
+              <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-900">What This Means for You</h4>
+            </div>
+            <span class="text-[11px] text-slate-500 font-medium hidden sm:inline">Plain Human Translation of Everyday Privacy Impact</span>
+          </div>
+
+          <!-- 3 Dynamic Plain-English Human Impact Bullets -->
+          <div id="whatMeansForYouContainer" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <!-- Dynamically populated via JS -->
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= 3. AUDIT DASHBOARD (DIAL + CHECKLIST) ================= -->
+      <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Single Source of Truth Risk Score Dial & Metrics (4 cols) -->
+        <div class="lg:col-span-4 space-y-4">
+          
+          <!-- Single Source of Truth Dial Card -->
+          <div class="p-6 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-xl flex flex-col items-center justify-center relative overflow-hidden">
+            
+            <div class="w-full flex items-center justify-between mb-1">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <i class="fa-solid fa-gauge-high text-emerald-600"></i>
+                Privacy Threat Meter
+              </span>
+              <span id="verdictPill" class="text-xs font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-300">
+                High Risk
+              </span>
+            </div>
+
+            <!-- SVG Gauge Meter -->
+            <div class="relative w-56 h-56 my-2 flex items-center justify-center">
+              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 160 160">
+                <!-- Background Circle Track -->
+                <circle cx="80" cy="80" r="65" stroke-width="13" stroke="#e2e8f0" fill="transparent" stroke-linecap="round"/>
+                <!-- Dynamic Colored Ring -->
+                <circle id="gaugeArc" class="gauge-progress-circle" cx="80" cy="80" r="65" stroke-width="13" 
+                        stroke="#f43f5e" fill="transparent" stroke-linecap="round"
+                        stroke-dasharray="408.4" stroke-dashoffset="60"/>
+              </svg>
+
+              <!-- Center Score Display -->
+              <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <div id="dialScoreNumber" class="text-5xl font-black font-mono tracking-tight text-rose-600 transition-all duration-300">
+                  86
+                </div>
+                <div class="text-[11px] font-bold uppercase text-slate-500 tracking-wider mt-0.5">Threat Score</div>
+                
+                <!-- Hardening Delta Pill -->
+                <div id="dialDeltaBadge" class="mt-2 text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300 hidden">
+                  <i class="fa-solid fa-arrow-down mr-0.5"></i> -0 pts hardened
+                </div>
+              </div>
+            </div>
+
+            <!-- Risk Threshold Visual Scale -->
+            <div class="w-full space-y-1.5">
+              <div class="flex justify-between text-[11px] font-mono font-semibold">
+                <span class="text-emerald-700 font-bold">0 Safe</span>
+                <span class="text-amber-700 font-bold">50 Moderate</span>
+                <span class="text-rose-700 font-bold">100 Critical</span>
+              </div>
+              <div class="w-full h-2 rounded-full bg-slate-100 p-0.5 flex gap-1 border border-slate-200">
+                <div class="flex-1 rounded-l-full bg-emerald-500"></div>
+                <div class="flex-1 bg-amber-500"></div>
+                <div class="flex-1 rounded-r-full bg-rose-500"></div>
+              </div>
+            </div>
+
+            <!-- Dynamic Plain-English Threat Verdict -->
+            <div id="dialNarrativeBox" class="w-full mt-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 leading-relaxed font-medium">
+              <div class="flex items-start gap-2">
+                <span class="text-base shrink-0 leading-none">🚨</span>
+                <div>
+                  <div class="font-bold text-rose-800 text-xs">High Danger</div>
+                  <div class="text-[11px] text-slate-600 mt-0.5 leading-relaxed font-medium">This app has access to your most private phone sensors (mic, location, files). Turn off permissions you don't need below.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reset to Defaults Button -->
+            <div class="w-full mt-3 pt-3 border-t border-slate-200 flex justify-end">
+              <button id="btnResetToDefaults" class="text-xs text-slate-500 hover:text-slate-800 font-semibold flex items-center gap-1.5 transition cursor-pointer">
+                <i class="fa-solid fa-rotate-left"></i>
+                <span>Reset to App Defaults</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Quick Metrics Grid -->
+          <div class="grid grid-cols-2 gap-3">
+            
+            <div class="p-4 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-md flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-600 text-base shrink-0">
+                <i class="fa-solid fa-star"></i>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Core Features</div>
+                <div id="statCoreCount" class="text-lg font-black text-slate-900 font-mono">4</div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-md flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-600 text-base shrink-0">
+                <i class="fa-solid fa-shield"></i>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Mitigated / Safe</div>
+                <div id="statHardenedCount" class="text-lg font-black text-emerald-600 font-mono">0</div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-md flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-cyan-100 border border-cyan-200 flex items-center justify-center text-cyan-700 text-base shrink-0">
+                <i class="fa-solid fa-arrow-trend-down"></i>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Threat Reduction</div>
+                <div id="statPointsReduced" class="text-lg font-black text-cyan-700 font-mono">0 pts</div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-md flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-rose-100 border border-rose-200 flex items-center justify-center text-rose-600 text-base shrink-0">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Suspicious Flags</div>
+                <div id="statAnomaliesCount" class="text-lg font-black text-rose-600 font-mono">0</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Export Config Button Card -->
+          <div class="p-4 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-md space-y-2.5">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-file-arrow-down text-emerald-600"></i>
+              <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-900">Download Phone Action Plan</h4>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed font-medium">
+              Export a concise summary checklist with step-by-step Android and iOS settings guides.
+            </p>
+            <button id="btnExportHardenedConfig" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition cursor-pointer">
+              <i class="fa-solid fa-download text-emerald-400"></i>
+              <span>Export Privacy Config (.txt)</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Right Column: 1-Click Action & Interactive Hardening Checklist (8 cols) -->
+        <div class="lg:col-span-8 space-y-4">
+          
+          <!-- ================= 3. PROMINENT 1-CLICK APPLY SAFE SETTINGS ================= -->
+          <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white shadow-xl shadow-emerald-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-emerald-400/30">
+            <div class="flex items-center space-x-3.5">
+              <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl text-white shrink-0 border border-white/25">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+              </div>
+              <div>
+                <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+                  1-Click Privacy Hardening
+                </h3>
+                <p class="text-xs text-emerald-100 leading-relaxed font-medium">
+                  Instantly revoke invasive tracking (background mic, exact GPS, contacts) while keeping essential features working.
+                </p>
+              </div>
+            </div>
+
+            <button id="btnApplyRecommendedFix" class="px-5 py-3 rounded-xl bg-white hover:bg-emerald-50 text-emerald-950 font-black text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all duration-200 shrink-0 flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+              <i class="fa-solid fa-shield-halved text-emerald-600 text-base"></i>
+              <span id="btnApplyFixText">Apply Recommended Privacy Fix</span>
+            </button>
+          </div>
+
+          <!-- Filter Toolbar with Primary Categories Only -->
+          <div class="p-4 sm:p-5 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-lg space-y-3.5">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center space-x-2">
+                <span class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                  <i class="fa-solid fa-list-check text-emerald-600"></i>
+                  Permission Hardening Checklist
+                </span>
+                <span id="filteredMatchCountPill" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono font-bold">9 of 9</span>
+              </div>
+
+              <!-- Search Bar -->
+              <div class="relative w-full sm:w-60">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="permissionSearchInput" class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition font-medium" placeholder="Search permissions...">
+              </div>
+            </div>
+
+            <!-- Simplified Primary Category Filter Pills Only -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs" id="categoryFilterContainer">
+              <button data-cat="all" class="cat-pill active px-3.5 py-1.5 rounded-xl bg-slate-900 text-white font-bold whitespace-nowrap transition shadow-sm cursor-pointer">
+                All Permissions
+              </button>
+              <button data-cat="Location" class="cat-pill px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold whitespace-nowrap transition cursor-pointer">
+                <i class="fa-solid fa-location-dot text-rose-500 mr-1.5"></i> Location
+              </button>
+              <button data-cat="Microphone" class="cat-pill px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold whitespace-nowrap transition cursor-pointer">
+                <i class="fa-solid fa-microphone text-amber-500 mr-1.5"></i> Mic
+              </button>
+              <button data-cat="Camera" class="cat-pill px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold whitespace-nowrap transition cursor-pointer">
+                <i class="fa-solid fa-camera text-cyan-600 mr-1.5"></i> Camera
+              </button>
+              <button data-cat="Contacts" class="cat-pill px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold whitespace-nowrap transition cursor-pointer">
+                <i class="fa-solid fa-address-book text-indigo-500 mr-1.5"></i> Contacts
+              </button>
+              <button data-cat="Storage" class="cat-pill px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold whitespace-nowrap transition cursor-pointer">
+                <i class="fa-solid fa-hard-drive text-blue-600 mr-1.5"></i> Storage
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Cards Container (Crisp White Consumer Cards) -->
+          <div id="permissionsCardContainer" class="space-y-3.5">
+            <!-- Dynamically populated via JavaScript -->
+          </div>
+
+          <!-- Empty State (No search results) -->
+          <div id="noMatchEmptyState" class="hidden p-8 rounded-2xl bg-white text-slate-900 border border-slate-200 text-center space-y-3 shadow-lg">
+            <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mx-auto text-xl">
+              <i class="fa-solid fa-filter-circle-xmark"></i>
+            </div>
+            <h4 class="text-sm font-bold text-slate-900">No Permissions Found</h4>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto">No permissions match your current search query or active category filter.</p>
+            <button id="btnResetSearchFilters" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer">
+              Reset Filters
+            </button>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ================= 4. MOBILE OS ENFORCEMENT GUIDE (COLLAPSIBLE) ================= -->
+      <section class="rounded-2xl bg-white text-slate-900 border border-slate-200 p-5 shadow-lg">
+        <div class="flex items-center justify-between cursor-pointer" id="phoneGuideHeader">
+          <div class="flex items-center space-x-3.5">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-600 text-base">
+              <i class="fa-solid fa-mobile-screen-button"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900">How to Enforce These Revocations on Your Physical Phone</h3>
+              <p class="text-xs text-slate-500">Quick 30-second instructions for Google Android and Apple iOS</p>
+            </div>
+          </div>
+          <button class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:text-slate-900 transition">
+            <i id="guideChevronIcon" class="fa-solid fa-chevron-down transition-transform duration-300"></i>
+          </button>
+        </div>
+
+        <div id="phoneGuideBody" class="hidden mt-4 pt-4 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          
+          <!-- Android Steps -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="flex items-center space-x-2 text-emerald-700 font-bold text-sm">
+              <i class="fa-brands fa-android text-base"></i>
+              <span>Google Android (Pixel, Samsung Galaxy, OnePlus)</span>
+            </div>
+            <ol class="list-decimal list-inside space-y-1.5 text-slate-700 leading-relaxed font-medium">
+              <li>Open your phone <strong class="text-slate-900">Settings</strong> &gt; <strong class="text-slate-900">Apps</strong>.</li>
+              <li>Tap the target app (e.g. <em>TikTok</em>, <em>Instagram</em>, or <em>Flashlight</em>).</li>
+              <li>Tap <strong class="text-slate-900">Permissions</strong>.</li>
+              <li>Select any sensitive permission (e.g. <em>Microphone</em> or <em>Location</em>).</li>
+              <li>Choose <strong class="text-rose-600 font-bold">Don't allow</strong>.</li>
+              <li>For Location: Toggle OFF <strong class="text-slate-900">"Use precise location"</strong> to stop exact street tracking.</li>
+            </ol>
+          </div>
+
+          <!-- iOS Steps -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="flex items-center space-x-2 text-indigo-700 font-bold text-sm">
+              <i class="fa-brands fa-apple text-base"></i>
+              <span>Apple iOS (iPhone / iPad)</span>
+            </div>
+            <ol class="list-decimal list-inside space-y-1.5 text-slate-700 leading-relaxed font-medium">
+              <li>Open phone <strong class="text-slate-900">Settings</strong> and scroll down to the app's name.</li>
+              <li>Turn OFF green toggles for <strong class="text-slate-900">Microphone</strong>, <strong class="text-slate-900">Camera</strong>, or <strong class="text-slate-900">Contacts</strong>.</li>
+              <li>Tap <strong class="text-slate-900">Location</strong> &gt; select <strong class="text-rose-600 font-bold">Never</strong> (or "While Using").</li>
+              <li>Turn OFF <strong class="text-slate-900">Precise Location</strong>.</li>
+              <li>Go to <strong class="text-slate-900">Settings &gt; Privacy & Security &gt; Tracking</strong> and disable tracking for this app.</li>
+            </ol>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ================= METHODOLOGY MODAL ================= -->
+    <div id="methodologyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white text-slate-900 border border-slate-200 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-lg bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-700">
+              <i class="fa-solid fa-calculator"></i>
+            </div>
+            <h3 class="text-base font-extrabold text-slate-900">PrivaSee Scoring Framework</h3>
+          </div>
+          <button id="btnCloseMethodologyModal" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center cursor-pointer">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+
+        <div class="text-xs text-slate-600 space-y-3 leading-relaxed font-medium">
+          <p>
+            PrivaSee evaluates mobile privacy through <strong class="text-slate-900">Contextual App Purpose Awareness</strong>, distinguishing between genuine operational requirements and suspicious surveillance:
+          </p>
+
+          <div class="grid grid-cols-3 gap-2 text-[11px]">
+            <div class="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-900">
+              <strong class="text-blue-950 font-bold block mb-1">⭐ Core / Essential:</strong>
+              Legitimate permissions required for core features (e.g. Camera in Instagram). Discounted risk penalty to avoid false alarms.
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800">
+              <strong class="text-slate-900 font-bold block mb-1">🧩 Optional / Secondary:</strong>
+              Adds convenience (e.g. friend syncing). Normal risk weight; safe to revoke without breaking the main app.
+            </div>
+            <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900">
+              <strong class="text-rose-950 font-bold block mb-1">🚨 Suspicious / Spyware:</strong>
+              Zero operational justification (e.g. Mic in Flashlight). Heavily penalized (1.6x threat multiplier).
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <div class="font-bold text-slate-900 mb-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-sliders text-emerald-600"></i>
+              Modern Granular Mitigation Controls:
+            </div>
+            <p class="text-slate-600">
+              Rather than breaking apps with binary On/Off toggles, PrivaSee supports <strong class="text-slate-900">"While In Use Only"</strong> (foreground restriction) and <strong class="text-slate-900">"Approximate Location"</strong> (city-level masking) to drastically lower threat scores while preserving 100% app functionality.
+            </p>
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end">
+          <button id="btnDismissMethodologyModal" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition cursor-pointer">
+            Close & Return to Audit
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= FOOTER ================= -->
+    <footer class="border-t border-slate-800 bg-slate-950 py-5 text-xs text-slate-400 mt-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+          <span class="text-slate-200 font-bold">PrivaSee</span>
+          <span>— Digital Privacy Assistant</span>
+        </div>
+        <div class="flex items-center space-x-3 text-slate-500">
+          <span>Zero Telemetry • 100% In-Browser Analysis</span>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ================= JAVASCRIPT ENGINE ================= -->
+  <script>
+    // --- 1. Master Permission Knowledge Base (Friendly Names + Plain English) ---
+    const PERMISSION_DICTIONARY = {
+      'ACCESS_FINE_LOCATION': {
+        name: 'ACCESS_FINE_LOCATION',
+        friendlyName: 'Precise GPS Location',
+        category: 'Location',
+        categoryIcon: 'fa-location-dot',
+        severity: 'Critical',
+        isSensitive: true,
+        supportsWhileInUse: true,
+        supportsApproximate: true,
+        defaultWeight: 16,
+        plainEnglish: 'Tracks your exact physical whereabouts down to street level, mapping where you live, work, and visit.',
+        whyItMatters: 'This app can see exactly where you are in real-time and track your daily travel habits.'
+      },
+      'ACCESS_COARSE_LOCATION': {
+        name: 'ACCESS_COARSE_LOCATION',
+        friendlyName: 'Approximate City Location',
+        category: 'Location',
+        categoryIcon: 'fa-location-dot',
+        severity: 'Medium',
+        isSensitive: false,
+        supportsWhileInUse: true,
+        supportsApproximate: false,
+        defaultWeight: 8,
+        plainEnglish: 'Detects your general city or town using nearby Wi-Fi and cell towers, not your exact street.',
+        whyItMatters: 'Used mainly to show local weather, regional news, or area-specific ads.'
+      },
+      'ACCESS_BACKGROUND_LOCATION': {
+        name: 'ACCESS_BACKGROUND_LOCATION',
+        friendlyName: '24/7 Background Location Tracking',
+        category: 'Location',
+        categoryIcon: 'fa-compass',
+        severity: 'Critical',
+        isSensitive: true,
+        supportsWhileInUse: true,
+        supportsApproximate: true,
+        defaultWeight: 20,
+        plainEnglish: 'Tracks everywhere you go 24/7, even when your screen is off and the app is closed.',
+        whyItMatters: 'Builds a complete, permanent map of every place you visit throughout the day and night.'
+      },
+      'RECORD_AUDIO': {
+        name: 'RECORD_AUDIO',
+        friendlyName: 'Microphone Audio Recording',
+        category: 'Microphone',
+        categoryIcon: 'fa-microphone',
+        severity: 'Critical',
+        isSensitive: true,
+        supportsWhileInUse: true,
+        supportsApproximate: false,
+        defaultWeight: 16,
+        plainEnglish: 'Can listen to your private conversations and background sounds anytime, even when you aren\'t using the app.',
+        whyItMatters: 'This app can record what you say in the room and build a profile on your daily life.'
+      },
+      'CAMERA': {
+        name: 'CAMERA',
+        friendlyName: 'Camera & Video Capture',
+        category: 'Camera',
+        categoryIcon: 'fa-camera',
+        severity: 'High',
+        isSensitive: true,
+        supportsWhileInUse: true,
+        supportsApproximate: false,
+        defaultWeight: 14,
+        plainEnglish: 'Can turn on your phone\'s front and back cameras to take pictures, record video, or scan your surroundings.',
+        whyItMatters: 'Gives the app a direct visual window into your private personal spaces and face.'
+      },
+      'READ_CONTACTS': {
+        name: 'READ_CONTACTS',
+        friendlyName: 'Personal Address Book (Read)',
+        category: 'Contacts',
+        categoryIcon: 'fa-address-book',
+        severity: 'High',
+        isSensitive: true,
+        supportsWhileInUse: false,
+        supportsApproximate: false,
+        defaultWeight: 14,
+        plainEnglish: 'Copies your entire contact list, including your family\'s names, phone numbers, and home addresses.',
+        whyItMatters: 'Shares the private phone numbers and details of everyone you know with remote company servers.'
+      },
+      'WRITE_CONTACTS': {
+        name: 'WRITE_CONTACTS',
+        friendlyName: 'Modify Address Book',
+        category: 'Contacts',
+        categoryIcon: 'fa-user-pen',
+        severity: 'Medium',
+        isSensitive: true,
+        supportsWhileInUse: false,
+        supportsApproximate: false,
+        defaultWeight: 10,
+        plainEnglish: 'Can add, edit, or delete contacts stored in your phone’s address book.',
+        whyItMatters: 'Can secretly insert spam contacts or change your existing address book records.'
+      },
+      'READ_CLIPBOARD': {
+        name: 'READ_CLIPBOARD',
+        friendlyName: 'Read Copied Text (Clipboard)',
+        category: 'Contacts',
+        categoryIcon: 'fa-clipboard',
+        severity: 'Critical',
+        isSensitive: true,
+        supportsWhileInUse: false,
+        supportsApproximate: false,
+        defaultWeight: 16,
+        plainEnglish: 'Reads whatever text you just copied or cut: passwords, two-factor codes, bank details, or private messages.',
+        whyItMatters: 'Can secretly grab sensitive passwords and personal messages the moment you copy them.'
+      },
+      'READ_EXTERNAL_STORAGE': {
+        name: 'READ_EXTERNAL_STORAGE',
+        friendlyName: 'Photos & Local File Storage',
+        category: 'Storage',
+        categoryIcon: 'fa-hard-drive',
+        severity: 'High',
+        isSensitive: false,
+        supportsWhileInUse: false,
+        supportsApproximate: false,
+        defaultWeight: 8,
+        plainEnglish: 'Can view and open all photos, saved videos, downloaded bills, and personal documents on your phone.',
+        whyItMatters: 'Allows the app to look through your personal photo gallery and saved files.'
+      },
+      'WRITE_EXTERNAL_STORAGE': {
+        name: 'WRITE_EXTERNAL_STORAGE',
+        friendlyName: 'Save to Local Storage',
+        category: 'Storage',
+        categoryIcon: 'fa-floppy-disk',
+        severity: 'Medium',
+        isSensitive: false,
+        supportsWhileInUse: false,
+        supportsApproximate: false,
+        defaultWeight: 6,
+        plainEnglish: 'Saves pictures, cached media, or app files directly to your phone storage.',
+        whyItMatters: 'Used to save files or download content so the app works smoothly.'
+      },
+      'READ_PHONE_STATE': {
+        name: 'READ_PHONE_STATE',
+        friendlyName: 'Device Hardware ID (IMEI)',
+        category: 'Location',
+        categoryIcon: 'fa-mobile-screen',
+        severity: 'High',
+        isSensitive: true,
+        supportsWhileInUse: false,
+        supportsApproximate: false,
+        defaultWeight: 14,
+        plainEnglish: 'Reads your phone\'s permanent hardware serial number (IMEI), cellular network, and active phone call status.',
+        whyItMatters: 'Creates an unchangeable tracking tag for your physical phone that persists even if you reinstall the app.'
+      },
+      'READ_CALL_LOG': {
+        name: 'READ_CALL_LOG',
+        friendlyName: 'Phone Call History Log',
+        category: 'Contacts',
+        categoryIcon: 'fa-phone-volume',
+        severity: 'Critical',
+        isSensitive: true,
+        supportsWhileInUse: false,
+        supportsApproximate: false,
+        defaultWeight: 18,
+        plainEnglish: 'Inspects your complete call log: who you called, who called you, missed calls, and how long you talked.',
+        whyItMatters: 'Reveals your personal calling habits and private relationships to data companies.'
+      },
+      'READ_SMS': {
+        name: 'READ_SMS',
+        friendlyName: 'Read Incoming Text Messages',
+        category: 'Contacts',
+        categoryIcon: 'fa-envelope-open-text',
+        severity: 'Critical',
+        isSensitive: true,
+        supportsWhileInUse: false,
+        supportsApproximate: false,
+        defaultWeight: 20,
+        plainEnglish: 'Can read all incoming SMS text messages, including private chats and bank verification security codes.',
+        whyItMatters: 'Allows the app to read private text messages and intercept one-time passwords.'
+      },
+      'SYSTEM_ALERT_WINDOW': {
+        name: 'SYSTEM_ALERT_WINDOW',
+        friendlyName: 'Draw Over Other Apps (Overlay)',
+        category: 'Location',
+        categoryIcon: 'fa-window-restore',
+        severity: 'Critical',
+        isSensitive: true,
+        supportsWhileInUse: false,
+        supportsApproximate: false,
+        defaultWeight: 12,
+        plainEnglish: 'Draws floating pop-up windows over any other app you are using, including login screens and banking apps.',
+        whyItMatters: 'Can trick you into tapping fake buttons or show intrusive floating advertisements.'
+      },
+      'ACTIVITY_RECOGNITION': {
+        name: 'ACTIVITY_RECOGNITION',
+        friendlyName: 'Physical Motion & Activity',
+        category: 'Location',
+        categoryIcon: 'fa-person-walking',
+        severity: 'Medium',
+        isSensitive: false,
+        supportsWhileInUse: false,
+        supportsApproximate: false,
+        defaultWeight: 6,
+        plainEnglish: 'Detects whether you are walking, running, biking, driving in a car, or standing still.',
+        whyItMatters: 'Monitors your daily movement patterns and workout routines.'
+      },
+      'POST_NOTIFICATIONS': {
+        name: 'POST_NOTIFICATIONS',
+        friendlyName: 'Push Notifications',
+        category: 'Storage',
+        categoryIcon: 'fa-bell',
+        severity: 'Low',
+        isSensitive: false,
+        supportsWhileInUse: false,
+        supportsApproximate: false,
+        defaultWeight: 4,
+        plainEnglish: 'Sends you alerts, messages, and reminder banners in your phone\'s notification bar.',
+        whyItMatters: 'Keeps you updated on new messages or alerts, but can be used for marketing reminders.'
+      },
+      'INTERNET': {
+        name: 'INTERNET',
+        friendlyName: 'Internet & Cloud Access',
+        category: 'Storage',
+        categoryIcon: 'fa-globe',
+        severity: 'Low',
+        isSensitive: false,
+        supportsWhileInUse: false,
+        supportsApproximate: false,
+        defaultWeight: 4,
+        plainEnglish: 'Lets the app connect to the internet to load content, sync your account, and download updates.',
+        whyItMatters: 'Standard permission required for almost any modern online app to connect to its servers.'
+      }
+    };
+
+    // --- 2. Pre-seeded App Profiles & Human Impact Dictionaries ---
+    const APPS_DATABASE = {
+      'tiktok': {
+        id: 'tiktok',
+        name: 'TikTok',
+        category: 'Social Video Platform',
+        iconClass: 'fa-brands fa-tiktok',
+        iconBg: 'bg-black text-rose-400',
+        description: 'Short-form video entertainment platform requesting aggressive ambient sensors and biometric markers.',
+        baselineScore: 87,
+        isSuspicious: false,
+        permissions: [
+          { perm: 'CAMERA', baseWeight: 14, tier: 'core', coreImpact: 'Disabling Camera prevents recording video clips or using visual filters.', state: 'full', customNote: 'Used to record videos, take selfies, and apply visual filters.' },
+          { perm: 'RECORD_AUDIO', baseWeight: 16, tier: 'core', coreImpact: 'Disabling Mic prevents voice recording in clips, voiceovers, and sound effects.', state: 'full', customNote: 'Can record room audio and conversations anytime you make videos or use sound features.' },
+          { perm: 'READ_EXTERNAL_STORAGE', baseWeight: 8, tier: 'core', coreImpact: 'Disabling Storage blocks uploading video clips and saving drafts.', state: 'full', customNote: 'Scans your gallery so you can choose videos and photos to upload.' },
+          { perm: 'INTERNET', baseWeight: 4, tier: 'core', coreImpact: 'Disabling Internet blocks video streaming and feed updates.', state: 'full', customNote: 'Connects to TikTok servers to stream video clips and send app analytics.' },
+          { perm: 'ACCESS_FINE_LOCATION', baseWeight: 16, tier: 'optional', coreImpact: 'Optional: Local feed customization disabled; general videos continue loading.', state: 'full', customNote: 'Collects your exact street location to customize video recommendations and local ads.' },
+          { perm: 'READ_CLIPBOARD', baseWeight: 16, tier: 'optional', coreImpact: 'Optional: Auto-pasting copied links disabled; clipboard data stays private.', state: 'full', customNote: 'Checks whatever text you copied whenever you open the app.' },
+          { perm: 'READ_CONTACTS', baseWeight: 14, tier: 'optional', coreImpact: 'Optional: Friend sync disabled; you can still search users manually by username.', state: 'full', customNote: 'Uploads your contact list to connect you with friends and find people you may know.' },
+          { perm: 'READ_PHONE_STATE', baseWeight: 14, tier: 'suspicious', coreImpact: 'None. Safe to block: Permanent hardware IMEI tracking is non-essential for video viewing.', state: 'full', customNote: 'Reads phone hardware IDs to track this specific device across different accounts.' },
+          { perm: 'ACTIVITY_RECOGNITION', baseWeight: 6, tier: 'optional', coreImpact: 'Optional: Physical workout motion ad tracking disabled.', state: 'full', customNote: 'Checks if you are walking or in transit to suggest active video content.' }
+        ]
+      },
+      'instagram': {
+        id: 'instagram',
+        name: 'Instagram',
+        category: 'Photo & Social Media',
+        iconClass: 'fa-brands fa-instagram',
+        iconBg: 'bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white',
+        description: 'Photo and stories sharing platform by Meta Platforms with algorithmic ad measurement.',
+        baselineScore: 46,
+        isSuspicious: false,
+        permissions: [
+          { perm: 'CAMERA', baseWeight: 14, tier: 'core', coreImpact: 'Disabling Camera prevents recording Stories, Reels, or taking photos directly in the app.', state: 'full', customNote: 'Used to snap photos, record Reels, and take Stories.' },
+          { perm: 'RECORD_AUDIO', baseWeight: 14, tier: 'core', coreImpact: 'Disabling Mic mutes sound in Reels and direct video messages.', state: 'full', customNote: 'Captures microphone sound while you record videos or voice messages.' },
+          { perm: 'READ_EXTERNAL_STORAGE', baseWeight: 8, tier: 'core', coreImpact: 'Disabling Storage blocks uploading photos or videos from your phone gallery.', state: 'full', customNote: 'Opens your photo gallery so you can pick pictures and videos to post.' },
+          { perm: 'INTERNET', baseWeight: 4, tier: 'core', coreImpact: 'Disabling Internet blocks feed loading, direct messages, and stories.', state: 'full', customNote: 'Streams photos and videos from Meta servers and synchronizes your feed.' },
+          { perm: 'ACCESS_FINE_LOCATION', baseWeight: 16, tier: 'optional', coreImpact: 'Optional: Auto-tagging nearby venues is disabled; you can still type location tags manually.', state: 'full', customNote: 'Tags locations on your posts and shows nearby venues and local ads.' },
+          { perm: 'READ_CONTACTS', baseWeight: 14, tier: 'optional', coreImpact: 'Optional: Address book friend sync disabled; you can still search friends by username.', state: 'full', customNote: 'Checks your address book to suggest friends and sync contacts with Meta.' },
+          { perm: 'POST_NOTIFICATIONS', baseWeight: 4, tier: 'optional', coreImpact: 'Optional: Mutes push notification popups for DMs, likes, and comments.', state: 'full', customNote: 'Alerts you about new direct messages, likes, and comments.' }
+        ]
+      },
+      'flashlight': {
+        id: 'flashlight',
+        name: 'Flashlight Pro',
+        category: 'Utility (Spyware Pattern)',
+        iconClass: 'fa-solid fa-bolt',
+        iconBg: 'bg-amber-100 text-amber-600 border border-amber-300',
+        description: '🚨 MALWARE PATTERN: A torch utility that only needs camera LED flash, yet requests microphone, contacts, and GPS tracking!',
+        baselineScore: 100,
+        isSuspicious: true,
+        permissions: [
+          { perm: 'CAMERA', baseWeight: 4, tier: 'core', coreImpact: 'Turns off LED hardware. Torch will not emit light.', state: 'full', customNote: 'Legitimate: Needed strictly to turn on the camera flash LED light.' },
+          { perm: 'RECORD_AUDIO', baseWeight: 18, tier: 'suspicious', coreImpact: 'None. Safe to block: A torch utility has ZERO legitimate reason to listen to audio.', state: 'full', customNote: '🚨 Suspicious: A flashlight only needs an LED light! Listening to room audio is a major red flag.' },
+          { perm: 'READ_CONTACTS', baseWeight: 18, tier: 'suspicious', coreImpact: 'None. Safe to block: Torch functions 100% without your phone contact list.', state: 'full', customNote: '🚨 Suspicious: A torch has no reason to read your contact book. This data can be sold to advertisers.' },
+          { perm: 'ACCESS_FINE_LOCATION', baseWeight: 18, tier: 'suspicious', coreImpact: 'None. Safe to block: GPS tracking is completely unrelated to flashlight operation.', state: 'full', customNote: '🚨 Suspicious: A flashlight does not need your GPS location. It may be selling your location data.' },
+          { perm: 'READ_CALL_LOG', baseWeight: 18, tier: 'suspicious', coreImpact: 'None. Safe to block: Reading private call logs is dangerous spyware behavior for a torch.', state: 'full', customNote: '🚨 Suspicious: Reading your private call history is dangerous spyware behavior for a torch.' },
+          { perm: 'READ_PHONE_STATE', baseWeight: 14, tier: 'suspicious', coreImpact: 'None. Safe to block: Grabs hardware serial numbers to track device on ad networks.', state: 'full', customNote: '🚨 Suspicious: Grabs your device serial number (IMEI) to track your phone across ad networks.' },
+          { perm: 'SYSTEM_ALERT_WINDOW', baseWeight: 12, tier: 'suspicious', coreImpact: 'None. Safe to block: Prevents intrusive pop-up ads over other apps.', state: 'full', customNote: '🚨 Suspicious: Can pop up intrusive ads over your other apps and screens.' }
+        ]
+      },
+      'signal': {
+        id: 'signal',
+        name: 'Signal Messenger',
+        category: 'Secure Private Messaging',
+        iconClass: 'fa-solid fa-comment-sms',
+        iconBg: 'bg-blue-600 text-white',
+        description: 'Open-source, end-to-end encrypted private messenger engineered for zero metadata retention.',
+        baselineScore: 25,
+        isSuspicious: false,
+        permissions: [
+          { perm: 'INTERNET', baseWeight: 4, tier: 'core', coreImpact: 'Disabling Internet blocks sending and receiving encrypted messages.', state: 'full', customNote: 'Connects to Signal’s secure servers using private encrypted channels.' },
+          { perm: 'RECORD_AUDIO', baseWeight: 14, tier: 'core', coreImpact: 'Disabling Mic blocks encrypted phone calls and audio voice memos.', state: 'full', customNote: 'Used strictly when you make an encrypted voice call or send a voice memo.' },
+          { perm: 'CAMERA', baseWeight: 12, tier: 'core', coreImpact: 'Disabling Camera blocks taking encrypted photos or making secure video calls.', state: 'full', customNote: 'Used strictly when you take a photo to send or make an encrypted video call.' },
+          { perm: 'READ_EXTERNAL_STORAGE', baseWeight: 8, tier: 'core', coreImpact: 'Disabling Storage blocks local encrypted database backups.', state: 'full', customNote: 'Stores your encrypted message history and media safely on your device.' },
+          { perm: 'READ_CONTACTS', baseWeight: 10, tier: 'optional', coreImpact: 'Optional: Secure contact discovery disabled; you can still message users by phone number.', state: 'full', customNote: 'Matches your contacts securely using mathematical privacy codes; raw numbers are never uploaded.' },
+          { perm: 'POST_NOTIFICATIONS', baseWeight: 4, tier: 'optional', coreImpact: 'Optional: Message alerts won\'t pop up until you open the app.', state: 'full', customNote: 'Notifies you when you receive new secure messages.' }
+        ]
+      },
+      'custom': {
+        id: 'custom',
+        name: 'Custom Manifest Audit',
+        category: 'Manual Audit / Manifest',
+        iconClass: 'fa-solid fa-terminal',
+        iconBg: 'bg-cyan-100 text-cyan-700 border border-cyan-300',
+        description: 'Custom permission manifest analyzer with real-time semantic translation and threat assessment.',
+        baselineScore: 0,
+        isSuspicious: false,
+        permissions: []
+      }
+    };
+
+    // --- 3. Reactive State ---
+    let currentAppKey = 'tiktok';
+    let currentPermissions = [];
+    let activeCategory = 'all';
+    let searchQuery = '';
+
+    // --- 4. Bootstrap on DOM Ready ---
+    document.addEventListener('DOMContentLoaded', () => {
+      initApp('tiktok');
+      registerEventListeners();
+    });
+
+    // --- 5. Event Listeners ---
+    function registerEventListeners() {
+      // App selector tabs
+      document.querySelectorAll('.app-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const app = btn.dataset.app;
+          initApp(app);
+        });
+      });
+
+      // Primary Category filter pills
+      document.querySelectorAll('.cat-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          document.querySelectorAll('.cat-pill').forEach(p => {
+            p.classList.remove('active', 'bg-slate-900', 'text-white', 'shadow-sm');
+            p.classList.add('bg-slate-100', 'text-slate-700');
+          });
+          pill.classList.add('active', 'bg-slate-900', 'text-white', 'shadow-sm');
+          pill.classList.remove('bg-slate-100', 'text-slate-700');
+          activeCategory = pill.dataset.cat;
+          renderPermissionCards();
+        });
+      });
+
+      // Search input
+      const searchBox = document.getElementById('permissionSearchInput');
+      searchBox.addEventListener('input', (e) => {
+        searchQuery = e.target.value.toLowerCase().trim();
+        renderPermissionCards();
+      });
+
+      // Reset filters button
+      document.getElementById('btnResetSearchFilters').addEventListener('click', () => {
+        searchQuery = '';
+        searchBox.value = '';
+        activeCategory = 'all';
+        document.querySelector('.cat-pill[data-cat="all"]').click();
+      });
+
+      // 1-Click "Apply Recommended Privacy Fix" Action
+      document.getElementById('btnApplyRecommendedFix').addEventListener('click', applyRecommendedPrivacyFix);
+
+      // Interactive 10s Demo Tour
+      const demoBtn = document.getElementById('btnRunInteractiveDemo');
+      if (demoBtn) demoBtn.addEventListener('click', runInteractiveDemo);
+
+      // Reset to defaults
+      document.getElementById('btnResetToDefaults').addEventListener('click', () => {
+        initApp(currentAppKey);
+      });
+
+      // Export Config CTA
+      document.getElementById('btnExportHardenedConfig').addEventListener('click', exportHardenedConfigFile);
+
+      // Collapsible Guide
+      const guideHeader = document.getElementById('phoneGuideHeader');
+      const guideBody = document.getElementById('phoneGuideBody');
+      const guideChevron = document.getElementById('guideChevronIcon');
+      guideHeader.addEventListener('click', () => {
+        const isHidden = guideBody.classList.contains('hidden');
+        guideBody.classList.toggle('hidden');
+        guideChevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+      });
+
+      // Methodology Modal
+      const modal = document.getElementById('methodologyModal');
+      document.getElementById('btnOpenMethodology').addEventListener('click', () => modal.classList.remove('hidden'));
+      document.getElementById('btnCloseMethodologyModal').addEventListener('click', () => modal.classList.add('hidden'));
+      document.getElementById('btnDismissMethodologyModal').addEventListener('click', () => modal.classList.add('hidden'));
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
+      });
+
+      // Custom Paste Handlers
+      document.getElementById('btnRunCustomAudit').addEventListener('click', processCustomPermissions);
+      document.getElementById('btnClearCustomInput').addEventListener('click', () => {
+        document.getElementById('customManifestTextarea').value = '';
+      });
+      document.getElementById('btnPresetMalware').addEventListener('click', () => {
+        document.getElementById('customManifestTextarea').value = 
+`android.permission.RECORD_AUDIO
+android.permission.ACCESS_FINE_LOCATION
+android.permission.READ_CONTACTS
+android.permission.READ_SMS
+android.permission.SYSTEM_ALERT_WINDOW
+android.permission.INTERNET`;
+        processCustomPermissions();
+      });
+      document.getElementById('btnPresetFitness').addEventListener('click', () => {
+        document.getElementById('customManifestTextarea').value = 
+`android.permission.ACCESS_FINE_LOCATION
+android.permission.ACTIVITY_RECOGNITION
+android.permission.BODY_SENSORS
+android.permission.BLUETOOTH_SCAN
+android.permission.POST_NOTIFICATIONS
+android.permission.INTERNET`;
+        processCustomPermissions();
+      });
+    }
+
+    // --- 6. Application Loader ---
+    function initApp(appKey) {
+      currentAppKey = appKey;
+      const appData = APPS_DATABASE[appKey];
+
+      // Highlight active tab
+      document.querySelectorAll('.app-tab-btn').forEach(btn => {
+        const isActive = btn.dataset.app === appKey;
+        if (isActive) {
+          btn.classList.add('border-emerald-500', 'bg-slate-800', 'ring-2', 'ring-emerald-500/30');
+          btn.classList.remove('border-slate-800', 'bg-slate-850');
+        } else {
+          btn.classList.remove('border-emerald-500', 'bg-slate-800', 'ring-2', 'ring-emerald-500/30');
+          btn.classList.add('border-slate-800', 'bg-slate-850');
+        }
+      });
+
+      // Show/Hide Custom Paste Drawer
+      const customDrawer = document.getElementById('customPasteDrawer');
+      if (appKey === 'custom') {
+        customDrawer.classList.remove('hidden');
+        if (currentPermissions.length === 0) {
+          document.getElementById('customManifestTextarea').value = 
+`android.permission.ACCESS_FINE_LOCATION
+android.permission.RECORD_AUDIO
+android.permission.READ_CONTACTS
+android.permission.CAMERA
+android.permission.READ_CLIPBOARD
+android.permission.POST_NOTIFICATIONS`;
+          processCustomPermissions();
+          return;
+        }
+      } else {
+        customDrawer.classList.add('hidden');
+      }
+
+      // Deep clone permissions
+      currentPermissions = JSON.parse(JSON.stringify(appData.permissions));
+
+      // Update Banner UI
+      const iconContainer = document.getElementById('bannerAppIconContainer');
+      iconContainer.className = `w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-sm shrink-0 ${appData.iconBg}`;
+      document.getElementById('bannerAppIcon').className = appData.iconClass;
+      document.getElementById('bannerAppName').textContent = appData.name;
+      document.getElementById('bannerCategoryTag').textContent = appData.category;
+      document.getElementById('bannerAppDescription').textContent = appData.description;
+
+      const anomalyBadge = document.getElementById('bannerAnomalyBadge');
+      if (appData.isSuspicious) {
+        anomalyBadge.classList.remove('hidden');
+      } else {
+        anomalyBadge.classList.add('hidden');
+      }
+
+      document.getElementById('bannerPermCount').textContent = `${currentPermissions.length} Permissions Monitored`;
+
+      // Reset filters & render
+      searchQuery = '';
+      document.getElementById('permissionSearchInput').value = '';
+      activeCategory = 'all';
+      document.querySelector('.cat-pill[data-cat="all"]').click();
+
+      updateLiveAuditState();
+      renderPermissionCards();
+      renderWhatMeansForYou();
+    }
+
+    // --- 7. Custom Paste Parser ---
+    function processCustomPermissions() {
+      const raw = document.getElementById('customManifestTextarea').value.trim();
+      if (!raw) {
+        alert('Please enter at least one permission string.');
+        return;
+      }
+
+      const lines = raw.split('\n')
+        .map(l => l.trim())
+        .filter(l => l.length > 0);
+
+      const parsed = [];
+      const seen = new Set();
+
+      lines.forEach(line => {
+        let clean = line.replace(/['"<>,;]/g, '').trim();
+        if (clean.includes('.')) {
+          const parts = clean.split('.');
+          clean = parts[parts.length - 1];
+        }
+        clean = clean.toUpperCase().replace(/\s+/g, '_');
+
+        if (clean && !seen.has(clean)) {
+          seen.add(clean);
+          const dict = PERMISSION_DICTIONARY[clean];
+          parsed.push({
+            perm: clean,
+            baseWeight: dict ? dict.defaultWeight : (clean.includes('LOCATION') ? 18 : (clean.includes('AUDIO') ? 18 : 10)),
+            tier: 'optional',
+            state: 'full',
+            coreImpact: 'Optional feature entered via custom manifest.',
+            customNote: 'Custom audited permission entered via manifest.'
+          });
+        }
+      });
+
+      APPS_DATABASE['custom'].permissions = parsed;
+      currentPermissions = JSON.parse(JSON.stringify(parsed));
+
+      document.getElementById('bannerPermCount').textContent = `${currentPermissions.length} Permissions Monitored`;
+
+      updateLiveAuditState();
+      renderPermissionCards();
+      renderWhatMeansForYou();
+    }
+
+    // --- 8. Resolve Permission Details (Dictionary + Fallback) ---
+    function resolvePermissionDetails(item) {
+      const permKey = item.perm;
+      const dict = PERMISSION_DICTIONARY[permKey];
+      const sensitivePerms = [
+        'RECORD_AUDIO', 'CAMERA', 'ACCESS_FINE_LOCATION', 'ACCESS_BACKGROUND_LOCATION',
+        'READ_CONTACTS', 'WRITE_CONTACTS', 'READ_CLIPBOARD', 'READ_SMS', 'SEND_SMS',
+        'READ_CALL_LOG', 'READ_PHONE_STATE', 'SYSTEM_ALERT_WINDOW'
+      ];
+
+      const tier = item.tier || (item.isAnomaly ? 'suspicious' : 'optional');
+      const state = item.state || (item.allowed === false ? 'denied' : 'full');
+      const supportsWhileInUse = dict ? (dict.supportsWhileInUse || false) : (permKey.includes('LOCATION') || permKey.includes('AUDIO') || permKey.includes('CAM'));
+      const supportsApproximate = dict ? (dict.supportsApproximate || false) : (permKey.includes('LOCATION') && !permKey.includes('BACKGROUND'));
+      const coreImpact = item.coreImpact || (tier === 'core' ? `Disabling this permission will prevent primary features in this app.` : 'Optional: Secondary feature convenience disabled.');
+
+      if (dict) {
+        return {
+          name: dict.name,
+          friendlyName: dict.friendlyName,
+          category: dict.category,
+          categoryIcon: dict.categoryIcon,
+          severity: item.severity || dict.severity,
+          baseWeight: item.baseWeight !== undefined ? item.baseWeight : (item.weight !== undefined ? item.weight : dict.defaultWeight),
+          tier: tier,
+          state: state,
+          coreImpact: coreImpact,
+          supportsWhileInUse: supportsWhileInUse,
+          supportsApproximate: supportsApproximate,
+          plainEnglish: item.plainEnglishOverride || dict.plainEnglish,
+          whyItMatters: item.customNote || dict.whyItMatters,
+          isSensitive: tier === 'suspicious' || item.isAnomaly || dict.isSensitive || sensitivePerms.includes(permKey)
+        };
+      }
+
+      // Dynamic Fallback Heuristic
+      const key = permKey.toUpperCase();
+      let category = 'Storage';
+      let icon = 'fa-microchip';
+      let friendlyName = permKey.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+      let severity = item.severity || 'Medium';
+      let baseWeight = item.baseWeight !== undefined ? item.baseWeight : (item.weight !== undefined ? item.weight : 8);
+      let plainEnglish = `Controls hardware or system capabilities for ${permKey.toLowerCase().replace(/_/g, ' ')}.`;
+      let whyItMatters = item.customNote || 'Exposes internal system features and background device data.';
+      let isSensitive = tier === 'suspicious' || item.isAnomaly || sensitivePerms.includes(key);
+
+      if (key.includes('LOCATION') || key.includes('GPS')) {
+        category = 'Location';
+        icon = 'fa-location-dot';
+        friendlyName = 'Precise Location Tracking';
+        severity = 'Critical';
+        baseWeight = 18;
+        isSensitive = true;
+        plainEnglish = 'Tracks your exact physical whereabouts down to street level.';
+        whyItMatters = 'Allows the app to follow where you walk, drive, and visit.';
+      } else if (key.includes('AUDIO') || key.includes('MIC') || key.includes('RECORD')) {
+        category = 'Microphone';
+        icon = 'fa-microphone';
+        friendlyName = 'Microphone Audio Recording';
+        severity = 'Critical';
+        baseWeight = 18;
+        isSensitive = true;
+        plainEnglish = 'Can listen to your private conversations and background sounds.';
+        whyItMatters = 'The app can record audio in the room even when you are not speaking.';
+      } else if (key.includes('CAM')) {
+        category = 'Camera';
+        icon = 'fa-camera';
+        friendlyName = 'Camera & Video Capture';
+        severity = 'High';
+        baseWeight = 14;
+        isSensitive = true;
+        plainEnglish = 'Can turn on your cameras to take pictures, record video, or scan surroundings.';
+        whyItMatters = 'Gives the app visual access into your home and private spaces.';
+      } else if (key.includes('CONTACT')) {
+        category = 'Contacts';
+        icon = 'fa-address-book';
+        friendlyName = 'Personal Address Book';
+        severity = 'High';
+        baseWeight = 14;
+        isSensitive = true;
+        plainEnglish = 'Copies your entire list of saved contacts, phone numbers, and emails.';
+        whyItMatters = 'Shares friends and family members’ personal numbers with remote servers.';
+      } else if (key.includes('SMS') || key.includes('MMS')) {
+        category = 'Contacts';
+        icon = 'fa-envelope-open-text';
+        friendlyName = 'Read Incoming Text Messages';
+        severity = 'Critical';
+        baseWeight = 20;
+        isSensitive = true;
+        plainEnglish = 'Can read private SMS messages and one-time two-factor security codes.';
+        whyItMatters = 'Allows the app to read private messages and intercept bank login codes.';
+      } else if (key.includes('STORAGE') || key.includes('FILE')) {
+        category = 'Storage';
+        icon = 'fa-hard-drive';
+        friendlyName = 'Photos & Local File Storage';
+        severity = 'Medium';
+        baseWeight = 10;
+        isSensitive = false;
+        plainEnglish = 'Can view and open saved photos, media, and downloaded documents.';
+        whyItMatters = 'Allows the app to open your saved pictures and files.';
+      }
+
+      return {
+        name: permKey,
+        friendlyName,
+        category,
+        categoryIcon: icon,
+        severity,
+        baseWeight,
+        tier: tier,
+        state: state,
+        coreImpact: coreImpact,
+        supportsWhileInUse: supportsWhileInUse,
+        supportsApproximate: supportsApproximate,
+        plainEnglish,
+        whyItMatters: item.customNote || whyItMatters,
+        isSensitive
+      };
+    }
+
+    // --- 9. Refined Contextual Risk Score Calculation ---
+    function calculateContextualScore(permsList) {
+      if (!permsList || permsList.length === 0) return 0;
+      let total = 0;
+
+      permsList.forEach(p => {
+        const meta = resolvePermissionDetails(p);
+
+        // 1. Contextual tier multiplier (app purpose awareness)
+        let tierMultiplier = 1.0;
+        if (meta.tier === 'core') {
+          tierMultiplier = 0.30; // Core permissions have legitimate contextual justification
+        } else if (meta.tier === 'suspicious') {
+          tierMultiplier = 1.60; // Suspicious permissions are heavily penalized
+        } else {
+          tierMultiplier = 1.00; // Optional standard feature
+        }
+
+        // 2. Mitigation state multiplier (modern OS controls)
+        let stateMultiplier = 0;
+        if (meta.state === 'full') {
+          stateMultiplier = 1.0;
+        } else if (meta.state === 'while_in_use') {
+          stateMultiplier = 0.35; // Foreground only mitigates background surveillance
+        } else if (meta.state === 'approximate') {
+          stateMultiplier = 0.20; // Coarse masking mitigates exact GPS tracking
+        } else if (meta.state === 'denied') {
+          stateMultiplier = 0.0;  // Revoked completely
+        }
+
+        total += meta.baseWeight * tierMultiplier * stateMultiplier;
+      });
+
+      return Math.min(100, Math.round(total));
+    }
+    const computeRiskScore = calculateContextualScore;
+
+    // --- 10. Live Audit Dashboard Updater ---
+    function updateLiveAuditState() {
+      const activeList = currentPermissions;
+      const baseline = calculateContextualScore(activeList.map(p => ({ ...p, state: 'full' })));
+      const currentScore = calculateContextualScore(activeList);
+
+      const gaugeArc = document.getElementById('gaugeArc');
+      const scoreNumber = document.getElementById('dialScoreNumber');
+      const verdictPill = document.getElementById('verdictPill');
+      const narrativeBox = document.getElementById('dialNarrativeBox');
+      const deltaBadge = document.getElementById('dialDeltaBadge');
+
+      const statCore = document.getElementById('statCoreCount');
+      const statHardened = document.getElementById('statHardenedCount');
+      const statReduced = document.getElementById('statPointsReduced');
+      const statAnomalies = document.getElementById('statAnomaliesCount');
+
+      // SVG Arc Math (Radius = 65 -> Circumference = 2 * PI * 65 = 408.4)
+      const circumference = 408.4;
+      const offset = circumference - (currentScore / 100) * circumference;
+      gaugeArc.style.strokeDashoffset = offset;
+
+      // Color coding & verdict thresholds
+      let colorHex = '#10b981'; // Green
+      let verdict = 'Safe / Low Risk';
+      let pillClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+      let narrative = `
+        <div class="flex items-start gap-2">
+          <span class="text-base shrink-0 leading-none">✅</span>
+          <div>
+            <div class="font-bold text-emerald-800 text-xs">Protected & Safe</div>
+            <div class="text-[11px] text-slate-600 mt-0.5 leading-relaxed font-medium">Core functions are safely active, while intrusive tracking sensors are either restricted or turned off.</div>
+          </div>
+        </div>
+      `;
+
+      if (currentScore > 70) {
+        colorHex = '#f43f5e'; // Rose
+        verdict = 'Critical Risk';
+        pillClass = 'bg-rose-100 text-rose-800 border-rose-300';
+        narrative = `
+          <div class="flex items-start gap-2">
+            <span class="text-base shrink-0 leading-none">🚨</span>
+            <div>
+              <div class="font-bold text-rose-800 text-xs">High Danger / Spyware Flags</div>
+              <div class="text-[11px] text-slate-600 mt-0.5 leading-relaxed font-medium">This app has unrestricted access to invasive phone sensors (mic, location, or contacts) with suspicious or excessive exposure.</div>
+            </div>
+          </div>
+        `;
+      } else if (currentScore > 35) {
+        colorHex = '#f59e0b'; // Amber
+        verdict = 'Moderate Risk';
+        pillClass = 'bg-amber-100 text-amber-800 border-amber-300';
+        narrative = `
+          <div class="flex items-start gap-2">
+            <span class="text-base shrink-0 leading-none">⚠️</span>
+            <div>
+              <div class="font-bold text-amber-800 text-xs">Moderate Exposure</div>
+              <div class="text-[11px] text-slate-600 mt-0.5 leading-relaxed font-medium">Some sensitive features are active. You can restrict them to "While In Use" or "Approximate" to reduce privacy risk without breaking the app.</div>
+            </div>
+          </div>
+        `;
+      }
+
+      gaugeArc.setAttribute('stroke', colorHex);
+      scoreNumber.textContent = currentScore;
+      scoreNumber.style.color = colorHex;
+
+      verdictPill.textContent = verdict;
+      verdictPill.className = `text-xs font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${pillClass}`;
+      narrativeBox.innerHTML = narrative;
+
+      // Hardening Delta Badge
+      const drop = baseline - currentScore;
+      if (drop > 0) {
+        deltaBadge.classList.remove('hidden');
+        deltaBadge.innerHTML = `<i class="fa-solid fa-arrow-down mr-0.5"></i> -${drop} pts (${Math.round((drop/baseline)*100)}% hardened)`;
+      } else {
+        deltaBadge.classList.add('hidden');
+      }
+
+      // Stats Counters
+      let coreCount = 0;
+      let hardenedCount = 0;
+      let activeAnomalies = 0;
+
+      activeList.forEach(p => {
+        const meta = resolvePermissionDetails(p);
+        if (meta.tier === 'core') {
+          coreCount++;
+        }
+        if (meta.state === 'while_in_use' || meta.state === 'approximate' || meta.state === 'denied') {
+          hardenedCount++;
+        }
+        if (meta.tier === 'suspicious' && meta.state !== 'denied') {
+          activeAnomalies++;
+        }
+      });
+
+      if (statCore) statCore.textContent = coreCount;
+      if (statHardened) statHardened.textContent = hardenedCount;
+      if (statReduced) statReduced.textContent = `-${drop} pts`;
+      if (statAnomalies) statAnomalies.textContent = activeAnomalies;
+    }
+
+    // --- 11. Plain-English "What This Means for You" Summary Generator ---
+    function renderWhatMeansForYou() {
+      const container = document.getElementById('whatMeansForYouContainer');
+      if (!container) return;
+
+      const locItem = currentPermissions.find(p => p.perm.includes('LOCATION') || p.perm.includes('GPS'));
+      const micItem = currentPermissions.find(p => p.perm.includes('AUDIO') || p.perm.includes('MIC'));
+      const contactsItem = currentPermissions.find(p => p.perm.includes('CONTACT') || p.perm.includes('CALL_LOG'));
+      const clipItem = currentPermissions.find(p => p.perm.includes('CLIPBOARD') || p.perm.includes('SMS'));
+
+      const isLocRestricted = !locItem || locItem.state === 'denied' || locItem.state === 'approximate' || locItem.state === 'while_in_use';
+      const isMicRestricted = !micItem || micItem.state === 'denied' || micItem.state === 'while_in_use';
+      const isContactsDenied = !contactsItem || contactsItem.state === 'denied';
+
+      let bullets = [];
+
+      if (currentAppKey === 'tiktok') {
+        if (isLocRestricted && isMicRestricted && isContactsDenied) {
+          bullets = [
+            { icon: '🟢', title: 'Location Masked / Shielded', desc: 'Continuous GPS tracking prevented; location is masked or coarse city-level only.' },
+            { icon: '🟢', title: 'Mic Restricted to In-Use Only', desc: 'Audio recording only functions while recording video clips, blocking background snooping.' },
+            { icon: '🟢', title: 'Video Feed Preserved', desc: 'Camera, sound, and video playback operate normally for creating and watching content.' }
+          ];
+        } else {
+          bullets = [
+            { icon: '🔴', title: 'Can Track Your Exact Location 24/7', desc: 'Continuously logs street GPS coordinates to map where you live, work, and commute.' },
+            { icon: '🔴', title: 'Can Listen via Background Microphone', desc: 'Captures ambient room audio for sound synthesis and acoustic ad targeting.' },
+            { icon: '🟡', title: 'Accesses Clipboard & Contact Book', desc: 'Snoops on recently copied text (passwords, links) and harvests phone contact lists.' }
+          ];
+        }
+      } else if (currentAppKey === 'instagram') {
+        if (isLocRestricted && isContactsDenied) {
+          bullets = [
+            { icon: '🟢', title: 'Locations Kept Private', desc: 'Real-world GPS coordinates are masked; venue tags remain manual only.' },
+            { icon: '🟢', title: 'Contacts Kept Safe', desc: 'Address book phone numbers are shielded from cross-network Facebook ad graphs.' },
+            { icon: '🟢', title: 'Reels & Stories Protected', desc: 'Camera and mic are restricted to in-app use only, eliminating background eavesdropping.' }
+          ];
+        } else {
+          bullets = [
+            { icon: '🔴', title: 'Logs Exact Location & Venue Spots', desc: 'Records precise GPS coordinates and venue check-ins when publishing posts.' },
+            { icon: '🟡', title: 'Uploads Your Personal Address Book', desc: 'Cross-references personal contacts to build targeted advertising graphs.' },
+            { icon: '🟢', title: 'On-Demand Camera & Mic (Core)', desc: 'Microphone and camera are recognized as core features for capturing photos, Stories, and Reels.' }
+          ];
+        }
+      } else if (currentAppKey === 'flashlight') {
+        if (isLocRestricted && isMicRestricted && isContactsDenied) {
+          bullets = [
+            { icon: '🟢', title: 'Spyware Eavesdropping Blocked', desc: 'The torch has been disarmed of microphone access; room conversations cannot be recorded.' },
+            { icon: '🟢', title: 'Contacts & Phone Logs Shielded', desc: 'Data brokers cannot scrape your phone call history or address book.' },
+            { icon: '🟢', title: 'Flashlight Fully Functional', desc: 'Camera flash hardware LED is preserved with zero invasive spyware telemetry.' }
+          ];
+        } else {
+          bullets = [
+            { icon: '🚨', title: 'Covert Audio Eavesdropping', desc: 'A flashlight has ZERO legitimate need to record audio: indicates spyware surveillance.' },
+            { icon: '🚨', title: 'Steals Call History & Address Book', desc: 'Silently harvests full phone call logs and contact lists to sell to data brokers.' },
+            { icon: '🚨', title: 'Continuous GPS Surveillance', desc: 'Continuously broadcasts your physical movement to commercial ad brokers.' }
+          ];
+        }
+      } else if (currentAppKey === 'signal') {
+        bullets = [
+          { icon: '🟢', title: 'End-to-End Encrypted Core Features', desc: 'Microphone and camera are essential for private voice/video calls and cannot be intercepted.' },
+          { icon: '🟢', title: 'Private Cryptographic Contacts', desc: 'Contacts are matched via mathematical hashes; raw phone numbers are never stored.' },
+          { icon: '🟢', title: 'Zero Unjustified Permissions', desc: 'Clean security architecture with zero location tracking, adware, or background snooping.' }
+        ];
+      } else {
+        // Custom or Arbitrary Manifest
+        if (locItem && locItem.state === 'full') {
+          bullets.push({ icon: '🔴', title: 'Precise Location Tracking', desc: 'App can track your exact GPS coordinates and physical whereabouts.' });
+        } else {
+          bullets.push({ icon: '🟢', title: 'Location Protected / Masked', desc: 'Physical GPS tracking is restricted or turned off.' });
+        }
+        if (micItem && micItem.state === 'full') {
+          bullets.push({ icon: '🔴', title: 'Microphone Audio Access', desc: 'App can capture microphone audio, conversations, and room acoustics.' });
+        } else {
+          bullets.push({ icon: '🟢', title: 'Microphone Shielded', desc: 'Microphone is restricted to in-use only or muted.' });
+        }
+        if (contactsItem && contactsItem.state === 'full') {
+          bullets.push({ icon: '🟡', title: 'Address Book Access', desc: 'App can read personal phone numbers and contact associations.' });
+        } else if (clipItem && clipItem.state === 'full') {
+          bullets.push({ icon: '🔴', title: 'Sensitive Text Snooping', desc: 'App can inspect copied clipboard text or incoming messages.' });
+        } else {
+          bullets.push({ icon: '🟢', title: 'Contacts & Files Safe', desc: 'Address book and sensitive phone logs are safeguarded.' });
+        }
+      }
+
+      container.innerHTML = bullets.map(b => `
+        <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200 shadow-sm flex items-start gap-3.5 transition">
+          <span class="text-xl sm:text-2xl shrink-0 mt-0.5">${b.icon}</span>
+          <div class="space-y-1">
+            <div class="text-sm sm:text-base font-extrabold text-slate-900 leading-snug">${b.title}</div>
+            <div class="text-sm text-slate-700 font-medium leading-relaxed">${b.desc}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // --- 12. 1-Click "Apply Recommended Privacy Fix" Action ---
+    function applyRecommendedPrivacyFix() {
+      currentPermissions.forEach(p => {
+        const meta = resolvePermissionDetails(p);
+
+        if (currentAppKey === 'flashlight') {
+          // For Flashlight, only CAMERA (LED) is essential; everything else is spyware
+          if (meta.tier === 'core') {
+            p.state = 'full';
+            p.allowed = true;
+          } else {
+            p.state = 'denied';
+            p.allowed = false;
+          }
+        } else if (currentAppKey === 'tiktok') {
+          if (p.perm === 'CAMERA' || p.perm === 'RECORD_AUDIO') {
+            p.state = 'while_in_use';
+            p.allowed = true;
+          } else if (p.perm === 'ACCESS_FINE_LOCATION') {
+            p.state = 'approximate';
+            p.allowed = true;
+          } else if (meta.tier === 'suspicious' || p.perm === 'READ_CLIPBOARD' || p.perm === 'READ_CONTACTS' || p.perm === 'ACTIVITY_RECOGNITION') {
+            p.state = 'denied';
+            p.allowed = false;
+          } else {
+            p.state = 'full';
+            p.allowed = true;
+          }
+        } else if (currentAppKey === 'instagram') {
+          if (p.perm === 'CAMERA' || p.perm === 'RECORD_AUDIO') {
+            p.state = 'while_in_use';
+            p.allowed = true;
+          } else if (p.perm === 'ACCESS_FINE_LOCATION') {
+            p.state = 'approximate';
+            p.allowed = true;
+          } else if (p.perm === 'READ_CONTACTS') {
+            p.state = 'denied';
+            p.allowed = false;
+          } else {
+            p.state = 'full';
+            p.allowed = true;
+          }
+        } else if (currentAppKey === 'signal') {
+          if (p.perm === 'CAMERA' || p.perm === 'RECORD_AUDIO') {
+            p.state = 'while_in_use';
+            p.allowed = true;
+          } else {
+            p.state = 'full';
+            p.allowed = true;
+          }
+        } else {
+          // Custom / Generic App
+          if (meta.tier === 'suspicious') {
+            p.state = 'denied';
+            p.allowed = false;
+          } else if (meta.tier === 'core') {
+            if (meta.supportsWhileInUse) {
+              p.state = 'while_in_use';
+              p.allowed = true;
+            } else {
+              p.state = 'full';
+              p.allowed = true;
+            }
+          } else {
+            // Optional
+            if (meta.supportsApproximate) {
+              p.state = 'approximate';
+              p.allowed = true;
+            } else if (meta.supportsWhileInUse) {
+              p.state = 'while_in_use';
+              p.allowed = true;
+            } else if (meta.isSensitive) {
+              p.state = 'denied';
+              p.allowed = false;
+            } else {
+              p.state = 'full';
+              p.allowed = true;
+            }
+          }
+        }
+      });
+
+      pulseScoreDial();
+      updateLiveAuditState();
+      renderPermissionCards();
+      renderWhatMeansForYou();
+
+      // Visual Confirmation on Button
+      const fixBtnText = document.getElementById('btnApplyFixText');
+      const originalText = fixBtnText.textContent;
+      fixBtnText.innerHTML = '<i class="fa-solid fa-check text-emerald-600 mr-1"></i> Contextual Protection Applied!';
+      setTimeout(() => {
+        fixBtnText.textContent = originalText;
+      }, 2500);
+    }
+
+    // --- 13. Render Permission Cards (Granular Controls & Impact Warnings) ---
+    function renderPermissionCards() {
+      const container = document.getElementById('permissionsCardContainer');
+      const emptyState = document.getElementById('noMatchEmptyState');
+      const counterBadge = document.getElementById('filteredMatchCountPill');
+
+      container.innerHTML = '';
+      let rendered = 0;
+
+      currentPermissions.forEach((item, index) => {
+        const meta = resolvePermissionDetails(item);
+
+        // Filter Category
+        if (activeCategory !== 'all' && meta.category.toLowerCase() !== activeCategory.toLowerCase()) {
+          return;
+        }
+
+        // Filter Search
+        if (searchQuery) {
+          const searchHaystack = `${meta.name} ${meta.friendlyName} ${meta.plainEnglish} ${meta.whyItMatters} ${meta.category}`.toLowerCase();
+          if (!searchHaystack.includes(searchQuery)) {
+            return;
+          }
+        }
+
+        rendered++;
+
+        const isFull = meta.state === 'full';
+        const isWhileInUse = meta.state === 'while_in_use';
+        const isApprox = meta.state === 'approximate';
+        const isDenied = meta.state === 'denied';
+
+        const card = document.createElement('div');
+
+        // Dynamic Card Framing & Colors
+        let cardClasses = '';
+        let stripeColor = '';
+        let tierBadge = '';
+        let statusBadge = '';
+
+        if (meta.tier === 'core') {
+          tierBadge = `<span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200 flex items-center gap-1 shrink-0"><i class="fa-solid fa-star text-blue-600"></i> Core Feature</span>`;
+        } else if (meta.tier === 'suspicious') {
+          tierBadge = `<span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-rose-600 text-white flex items-center gap-1 shadow-sm animate-pulse shrink-0"><i class="fa-solid fa-triangle-exclamation"></i> 🚨 Suspicious / Unjustified</span>`;
+        } else {
+          tierBadge = `<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-1 shrink-0"><i class="fa-solid fa-circle-check text-slate-500"></i> Optional Feature</span>`;
+        }
+
+        if (isDenied) {
+          cardClasses = 'bg-emerald-50/50 border border-emerald-300 border-l-4 border-l-emerald-600 shadow-sm';
+          stripeColor = 'bg-emerald-500';
+          statusBadge = `<span class="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-300 flex items-center gap-1 shrink-0"><i class="fa-solid fa-shield text-emerald-600"></i> Denied (Safest)</span>`;
+        } else if (isWhileInUse) {
+          cardClasses = 'bg-amber-50/30 border border-amber-300 border-l-4 border-l-amber-500 shadow-sm';
+          stripeColor = 'bg-amber-500';
+          statusBadge = `<span class="text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300 flex items-center gap-1 shrink-0"><i class="fa-solid fa-clock text-amber-600"></i> While In Use (Restricted)</span>`;
+        } else if (isApprox) {
+          cardClasses = 'bg-teal-50/40 border border-teal-300 border-l-4 border-l-teal-600 shadow-sm';
+          stripeColor = 'bg-teal-600';
+          statusBadge = `<span class="text-[11px] font-bold text-teal-800 bg-teal-100 px-2.5 py-1 rounded-lg border border-teal-300 flex items-center gap-1 shrink-0"><i class="fa-solid fa-map-pin text-teal-600"></i> Approximate City Only</span>`;
+        } else {
+          // Full access
+          if (meta.tier === 'suspicious') {
+            cardClasses = 'bg-rose-50/80 border-2 border-rose-400 border-l-4 border-l-rose-600 shadow-md shadow-rose-100';
+            stripeColor = 'bg-rose-600 animate-pulse';
+            statusBadge = `<span class="text-[11px] font-bold text-rose-800 bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-300 flex items-center gap-1 shrink-0"><i class="fa-solid fa-triangle-exclamation text-rose-600"></i> Full Access (Danger)</span>`;
+          } else if (meta.tier === 'core') {
+            cardClasses = 'bg-white border border-blue-200 border-l-4 border-l-blue-600 shadow-sm';
+            stripeColor = 'bg-blue-600';
+            statusBadge = `<span class="text-[11px] font-bold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 shrink-0">Full Access (Standard)</span>`;
+          } else {
+            cardClasses = 'bg-white border border-slate-200 border-l-4 border-l-slate-400 shadow-sm';
+            stripeColor = 'bg-slate-400';
+            statusBadge = `<span class="text-[11px] font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 shrink-0">Full Access</span>`;
+          }
+        }
+
+        card.className = `p-4 sm:p-5 rounded-2xl ${cardClasses} crisp-card shadow-sm space-y-3 relative overflow-hidden`;
+
+        // Severity Tag
+        let severityTag = '';
+        if (meta.severity === 'Critical') {
+          severityTag = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200 shrink-0">Critical Threat</span>`;
+        } else if (meta.severity === 'High') {
+          severityTag = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200 shrink-0">High Risk</span>`;
+        } else if (meta.severity === 'Medium') {
+          severityTag = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-800 border border-cyan-200 shrink-0">Medium</span>`;
+        } else {
+          severityTag = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">Low / Safe</span>`;
+        }
+
+        // Granular Mitigation Buttons Control
+        let buttonsHtml = `
+          <div class="flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200 gap-1 flex-wrap sm:flex-nowrap" data-perm-index="${index}">
+            <button type="button" data-set-state="full" class="state-pill px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+              isFull 
+                ? (meta.tier === 'suspicious' ? 'bg-rose-600 text-white shadow-sm' : 'bg-slate-900 text-white shadow-sm') 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+            }">
+              <i class="fa-solid fa-unlock text-[10px]"></i>
+              <span>Full</span>
+            </button>
+        `;
+
+        if (meta.supportsWhileInUse) {
+          buttonsHtml += `
+            <button type="button" data-set-state="while_in_use" class="state-pill px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+              isWhileInUse 
+                ? 'bg-amber-500 text-white shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+            }">
+              <i class="fa-solid fa-clock text-[10px]"></i>
+              <span>While In Use</span>
+            </button>
+          `;
+        }
+
+        if (meta.supportsApproximate) {
+          buttonsHtml += `
+            <button type="button" data-set-state="approximate" class="state-pill px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+              isApprox 
+                ? 'bg-teal-600 text-white shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+            }">
+              <i class="fa-solid fa-map-pin text-[10px]"></i>
+              <span>Approximate</span>
+            </button>
+          `;
+        }
+
+        buttonsHtml += `
+            <button type="button" data-set-state="denied" class="state-pill px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+              isDenied 
+                ? 'bg-emerald-600 text-white shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+            }">
+              <i class="fa-solid fa-ban text-[10px]"></i>
+              <span>Denied</span>
+            </button>
+          </div>
+        `;
+
+        card.innerHTML = `
+          <!-- Left Color Accent Stripe -->
+          <div class="absolute left-0 top-0 bottom-0 w-1.5 ${stripeColor}"></div>
+
+          <!-- Top Row: Friendly Permission Title + Technical ID + Segmented Controls -->
+          <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pl-2.5">
+            
+            <div class="flex items-center space-x-3">
+              <span class="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center text-sm shrink-0">
+                <i class="fa-solid ${meta.categoryIcon}"></i>
+              </span>
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-sm font-extrabold text-slate-900">${meta.friendlyName}</span>
+                  ${tierBadge}
+                  ${severityTag}
+                </div>
+                <div class="font-mono text-[10px] text-slate-400 mt-0.5">${meta.name}</div>
+              </div>
+            </div>
+
+            <!-- Segmented Mode Controls & Reassurance Badge -->
+            <div class="flex items-center space-x-2 self-start xl:self-center flex-wrap gap-y-2">
+              ${statusBadge}
+              ${buttonsHtml}
+            </div>
+
+          </div>
+
+          <!-- Card Body -->
+          <div class="pl-2.5 space-y-2.5">
+            
+            <!-- Inline Functionality Impact Warning (When Core Permission is Denied) -->
+            ${meta.tier === 'core' && isDenied ? `
+              <div class="p-3.5 rounded-xl bg-amber-50 border-2 border-amber-300 flex items-start gap-2.5 text-xs text-amber-900">
+                <i class="fa-solid fa-triangle-exclamation text-amber-600 text-base mt-0.5 shrink-0"></i>
+                <div>
+                  <div class="font-extrabold text-amber-950 flex items-center gap-1.5">
+                    <span>⚠️ Functionality Impact Warning</span>
+                  </div>
+                  <div class="mt-1 text-amber-900 leading-snug font-medium">
+                    ${meta.coreImpact}
+                  </div>
+                  ${meta.supportsWhileInUse ? `
+                    <div class="mt-2 text-[11px] text-amber-900 font-semibold bg-amber-100/80 p-2 rounded-lg border border-amber-200 flex items-center gap-1.5">
+                      <i class="fa-solid fa-lightbulb text-amber-600 shrink-0"></i>
+                      <span>Recommendation: Set to <strong>"While In Use"</strong> instead of Denied to stop background tracking without breaking this app.</span>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            ` : ''}
+
+            <!-- Suspicious / Spyware Alert Callout -->
+            ${meta.tier === 'suspicious' && !isDenied ? `
+              <div class="p-3 rounded-xl bg-rose-50 border-2 border-rose-300 flex items-start gap-2.5 text-xs text-rose-900">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base mt-0.5 shrink-0 animate-pulse"></i>
+                <div>
+                  <div class="font-extrabold text-rose-950">🚨 Unjustified Spyware Pattern Detected!</div>
+                  <div class="mt-0.5 text-rose-800 leading-snug font-medium">
+                    This app has ZERO operational reason to access this sensor. We strongly recommend selecting <strong>"Denied"</strong>.
+                  </div>
+                </div>
+              </div>
+            ` : ''}
+
+            <!-- Plain English Translation Box (1-2 punchy lines) -->
+            <div class="p-3.5 rounded-xl ${meta.tier === 'suspicious' && !isDenied ? 'bg-white/90 border border-rose-200' : 'bg-slate-50 border border-slate-200'}">
+              <div class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 mb-1 flex items-center gap-1.5">
+                <i class="fa-solid fa-comment-dots text-xs"></i> Plain Human Translation:
+              </div>
+              <p class="text-xs sm:text-sm font-semibold text-slate-900 leading-snug">
+                "${meta.plainEnglish}"
+              </p>
+            </div>
+
+            <!-- Single Clean Line: Why It Matters -->
+            <div class="text-xs text-slate-700 flex items-start gap-1.5 px-1 font-medium">
+              <i class="fa-solid fa-circle-info text-slate-500 mt-0.5 shrink-0"></i>
+              <span><strong class="text-slate-900">Why it matters:</strong> ${meta.whyItMatters}</span>
+            </div>
+
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      // Bind granular segmented buttons
+      container.querySelectorAll('.state-pill').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const parentContainer = btn.closest('[data-perm-index]');
+          const idx = parseInt(parentContainer.dataset.permIndex, 10);
+          const targetState = btn.dataset.setState;
+
+          currentPermissions[idx].state = targetState;
+          currentPermissions[idx].allowed = (targetState !== 'denied');
+
+          pulseScoreDial();
+          updateLiveAuditState();
+          renderPermissionCards();
+          renderWhatMeansForYou();
+        });
+      });
+
+      // Update counters & empty state
+      counterBadge.textContent = `${rendered} of ${currentPermissions.length}`;
+      if (rendered === 0) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+      }
+    }
+
+    // --- 14. Dial Pulse Micro-interaction ---
+    function pulseScoreDial() {
+      const scoreNumber = document.getElementById('dialScoreNumber');
+      scoreNumber.classList.add('scale-110');
+      setTimeout(() => scoreNumber.classList.remove('scale-110'), 250);
+    }
+
+    // --- 15. Export Hardened Privacy Config File (.txt) ---
+    function exportHardenedConfigFile() {
+      const app = APPS_DATABASE[currentAppKey];
+      const baseline = calculateContextualScore(currentPermissions.map(p => ({ ...p, state: 'full' })));
+      const hardenedScore = calculateContextualScore(currentPermissions);
+      const pointsDropped = baseline - hardenedScore;
+      const dropPct = baseline > 0 ? Math.round((pointsDropped / baseline) * 100) : 0;
+
+      const timestamp = new Date().toISOString();
+      const auditHash = 'PRIVASEE-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+
+      const revokedList = [];
+      const restrictedList = [];
+      const protectedCoreList = [];
+
+      currentPermissions.forEach(p => {
+        const meta = resolvePermissionDetails(p);
+        if (p.state === 'denied') {
+          revokedList.push(`  [REVOKED / DENIED] ${meta.friendlyName} (${meta.name})\n     • Impact: ${meta.coreImpact}\n     • Why it matters: ${meta.whyItMatters}`);
+        } else if (p.state === 'while_in_use' || p.state === 'approximate') {
+          const modeName = p.state === 'while_in_use' ? 'While In Use Only' : 'Approximate Location Only';
+          restrictedList.push(`  [RESTRICTED -> ${modeName.toUpperCase()}] ${meta.friendlyName} (${meta.name})\n     • Mitigation: Restricted to foreground/coarse mode to eliminate background snooping.\n     • Why it matters: ${meta.whyItMatters}`);
+        } else {
+          // Full access
+          protectedCoreList.push(`  [KEPT ACTIVE] ${meta.friendlyName} (${meta.name})\n     • Tier: ${meta.tier.toUpperCase()} | Feature kept enabled for application stability.`);
+        }
+      });
+
+      const report = 
+`================================================================================
+PRIVASEE — DIGITAL PRIVACY ASSISTANT
+CONTEXTUAL AUDIT & HARDENING ACTION PLAN
+================================================================================
+Timestamp:       ${timestamp}
+Audit Report ID: ${auditHash}
+Target App:      ${app.name} (${app.category})
+Engine:          PrivaSee v2.4 (Contextual Risk & App Purpose Awareness)
+
+--------------------------------------------------------------------------------
+1. EXECUTIVE CONTEXTUAL THREAT ASSESSMENT
+--------------------------------------------------------------------------------
+Initial Baseline Threat Score: ${baseline} / 100
+Hardened Privacy Score:        ${hardenedScore} / 100
+Total Threat Reduction:        -${pointsDropped} points (↓ ${dropPct}% threat reduction)
+Current Security Posture:      ${hardenedScore <= 35 ? 'SAFE / LOW RISK' : (hardenedScore <= 70 ? 'MODERATE RISK' : 'CRITICAL RISK')}
+
+Total Permissions Audited:     ${currentPermissions.length}
+Permissions Revoked (Safe):    ${revokedList.length}
+Permissions Restricted:        ${restrictedList.length}
+Protected Core Permissions:    ${protectedCoreList.length}
+
+--------------------------------------------------------------------------------
+2. REVOKED PERMISSIONS (SAFE TO TURN OFF COMPLETELY)
+--------------------------------------------------------------------------------
+${revokedList.length > 0 ? revokedList.join('\n\n') : '  None — no permissions revoked.'}
+
+--------------------------------------------------------------------------------
+3. RESTRICTED PERMISSIONS (WHILE IN USE / APPROXIMATE ONLY)
+--------------------------------------------------------------------------------
+${restrictedList.length > 0 ? restrictedList.join('\n\n') : '  None — no permissions restricted.'}
+
+--------------------------------------------------------------------------------
+4. PROTECTED CORE PERMISSIONS (KEPT ENABLED FOR STABILITY)
+--------------------------------------------------------------------------------
+${protectedCoreList.length > 0 ? protectedCoreList.join('\n\n') : '  None — all permissions mitigated.'}
+
+--------------------------------------------------------------------------------
+5. OS ENFORCEMENT GUIDE (STEP-BY-STEP PHONE SETTINGS)
+--------------------------------------------------------------------------------
+FOR GOOGLE ANDROID USERS:
+  1. Open Settings -> Apps -> ${app.name}.
+  2. Tap 'Permissions'.
+  3. For Section 2 (Revoked): Choose 'Don\'t Allow'.
+  4. For Section 3 (Restricted):
+     • Camera / Microphone: Choose 'Ask every time' or 'Allow only while using the app'.
+     • Location: Select 'Allow only while using the app' and toggle OFF 'Use precise location'.
+  5. For Section 4 (Protected Core): Leave enabled to avoid breaking app features.
+
+FOR APPLE iOS USERS:
+  1. Open Settings -> Scroll down to '${app.name}'.
+  2. For Section 2 (Revoked): Switch OFF toggles for Contacts, Local Network, Tracking.
+  3. For Section 3 (Restricted):
+     • Tap 'Location' -> Choose 'While Using the App' and toggle OFF 'Precise Location'.
+     • For Camera & Microphone: Can be toggled on/off per use in Settings.
+  4. Open Settings -> Privacy & Security -> Tracking -> Turn OFF tracking for '${app.name}'.
+
+================================================================================`;
+
+      const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.href = url;
+      downloadAnchor.download = `privasee-hardening-${currentAppKey}-${Date.now()}.txt`;
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      document.body.removeChild(downloadAnchor);
+      URL.revokeObjectURL(url);
+    }
+
+    // --- 16. Automatic Guided Demo Mode ---
+    function runInteractiveDemo() {
+      // Remove any existing banner
+      const existing = document.getElementById('demoTourBanner');
+      if (existing) existing.remove();
+
+      const demoBanner = document.createElement('div');
+      demoBanner.id = 'demoTourBanner';
+      demoBanner.className = 'fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-lg w-[92%] bg-slate-950/95 border-2 border-emerald-500 text-white p-3.5 rounded-2xl shadow-2xl backdrop-blur-md flex items-center justify-between gap-3 text-xs transition-all';
+      demoBanner.innerHTML = `
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">✨</span>
+          <div>
+            <div class="font-extrabold text-emerald-400 uppercase tracking-wider text-[10px]" id="demoStepNum">Demo Step 1 of 4</div>
+            <div class="font-bold text-white text-xs mt-0.5" id="demoStepMsg">Selecting Flashlight Pro (Threat Score: 100 / 100)...</div>
+          </div>
+        </div>
+        <button onclick="document.getElementById('demoTourBanner').remove()" class="text-slate-400 hover:text-white font-bold p-1 cursor-pointer">✕</button>
+      `;
+      document.body.appendChild(demoBanner);
+
+      // Step 1: Select Flashlight Pro
+      initApp('flashlight');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Step 2 (after 2s): Highlight Spyware Anomaly
+      setTimeout(() => {
+        const msg = document.getElementById('demoStepMsg');
+        const step = document.getElementById('demoStepNum');
+        if (!msg) return;
+        step.textContent = 'Demo Step 2 of 4';
+        msg.textContent = 'Notice the 🚨 Suspicious badges: Microphone, Contacts, and GPS are unneeded for a torch!';
+
+        const banner = document.getElementById('appOverviewBanner');
+        banner.classList.add('ring-4', 'ring-rose-500/80');
+        setTimeout(() => banner.classList.remove('ring-4', 'ring-rose-500/80'), 2200);
+      }, 2200);
+
+      // Step 3 (after 4.5s): Automatically trigger 1-click privacy fix
+      setTimeout(() => {
+        const msg = document.getElementById('demoStepMsg');
+        const step = document.getElementById('demoStepNum');
+        if (!msg) return;
+        step.textContent = 'Demo Step 3 of 4';
+        msg.textContent = 'Applying Contextual Fix... Keeps camera LED working, revokes all spyware!';
+
+        const fixBtn = document.getElementById('btnApplyRecommendedFix');
+        fixBtn.classList.add('ring-4', 'ring-white', 'scale-105');
+        setTimeout(() => fixBtn.classList.remove('ring-4', 'ring-white', 'scale-105'), 1500);
+
+        applyRecommendedPrivacyFix();
+      }, 4800);
+
+      // Step 4 (after 7.5s): Switch to Instagram to demonstrate Core Feature Awareness & "While In Use"
+      setTimeout(() => {
+        const msg = document.getElementById('demoStepMsg');
+        const step = document.getElementById('demoStepNum');
+        if (!msg) return;
+        step.textContent = 'Demo Step 4 of 4';
+        msg.textContent = 'Switching to Instagram: Camera & Mic are recognized as Core Features (46/100, no false alarm!)';
+
+        initApp('instagram');
+        setTimeout(() => {
+          applyRecommendedPrivacyFix();
+          const msg2 = document.getElementById('demoStepMsg');
+          if (msg2) msg2.textContent = 'Hardened Instagram: Camera set to "While In Use", Location to "Approximate" (Score: 14/100)!';
+        }, 1500);
+      }, 7600);
+
+      // Completion (after 12.5s)
+      setTimeout(() => {
+        const msg = document.getElementById('demoStepMsg');
+        const step = document.getElementById('demoStepNum');
+        if (!msg) return;
+        step.textContent = '🎉 Contextual Engine Demo Complete!';
+        msg.innerHTML = 'PrivaSee intelligently distinguishes essential features from malicious spyware.';
+        
+        setTimeout(() => {
+          const banner = document.getElementById('demoTourBanner');
+          if (banner) banner.remove();
+        }, 5000);
+      }, 12500);
+    }
+  </script>
+
+</body>
+</html>

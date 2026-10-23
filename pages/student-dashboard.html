@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>window.location.replace('/dashboard/student');</script>
+    <title>Student Dashboard | Smart Campus Bus</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Leaflet.js -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../css/style.css">
+
+    <!-- We will reuse the admin-layout styles from admin-dashboard.html -->
+    <style>
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--bg-primary);
+        }
+
+        .admin-sidebar {
+            width: 260px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-subtle);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .admin-sidebar .logo {
+            justify-content: flex-start;
+            color: var(--text-sidebar-active);
+        }
+
+        .admin-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .admin-nav__link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.8rem 1rem;
+            color: var(--text-sidebar);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .admin-nav__link:hover,
+        .admin-nav__link.active {
+            background: var(--bg-sidebar-hover);
+            color: var(--text-sidebar-active);
+        }
+
+        .nav-badge {
+            background-color: #ef4444;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            margin-left: auto;
+            line-height: 1;
+        }
+
+        .admin-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 2rem 3rem;
+            overflow-y: auto;
+            width: 100%;
+            background: var(--bg-primary);
+        }
+
+        /* Mobile Menu */
+        .mobile-toggle {
+            display: none;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0.25rem;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 99;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            .admin-content {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+                z-index: 1000;
+            }
+
+            .admin-sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay.open {
+                display: block;
+            }
+
+            .admin-content {
+                margin-left: 0;
+                padding: 1rem 0.75rem;
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+
+            #map-container {
+                height: 300px !important;
+            }
+
+            .admin-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+
+            .admin-header {
+                flex-direction: row;
+                gap: 0.5rem;
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .admin-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-card__value {
+                font-size: 1.5rem;
+            }
+
+            .notification-dropdown {
+                position: fixed !important;
+                top: 70px !important;
+                right: 10px !important;
+                left: 10px !important;
+                width: auto !important;
+            }
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .admin-header__title {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .admin-user {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--bg-surface);
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            border: 1px solid var(--border-card);
+        }
+
+        .admin-user__avatar {
+            font-size: 1.2rem;
+        }
+
+        .admin-user__name {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-card__title {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .stat-card__value {
+            color: var(--text-primary);
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-card__value.text-primary {
+            color: var(--accent-primary);
+        }
+
+        /* Specific Student Styles */
+        .welcome-card {
+            background: rgba(37, 99, 235, 0.05);
+            border: 1px solid rgba(37, 99, 235, 0.15);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-card::after {
+            content: '🎓';
+            position: absolute;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 6rem;
+            opacity: 0.05;
+        }
+
+        .welcome-card h2 {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-card p {
+            color: var(--text-muted);
+            max-width: 600px;
+        }
+
+        .upcoming-features {
+            background: var(--bg-surface);
+            border: 1px dashed var(--border-card);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .upcoming-features h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .status-badge--pending {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--accent-warning);
+            border: 1px solid rgba(217, 119, 6, 0.2);
+        }
+
+        .status-badge--active {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--accent-success);
+            border: 1px solid rgba(5, 150, 105, 0.2);
+        }
+
+        .status-badge--rejected {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--accent-warm);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .status-badge--running {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            animation: pulseRunning 1.5s infinite;
+        }
+
+        @keyframes pulseRunning {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .upcoming-features p {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        #email-verification-banner {
+            display: none;
+            background: rgba(217, 119, 6, 0.1);
+            border: 1px solid rgba(217, 119, 6, 0.2);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #email-verification-banner p {
+            color: var(--accent-warning);
+            margin: 0;
+            font-weight: 500;
+        }
+
+        /* Bus Details View */
+        .bus-details-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-back {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-card);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-back:hover {
+            background: var(--bg-surface-hover);
+        }
+
+        .map-container {
+            height: 400px;
+            border-radius: 16px;
+            border: 1px solid var(--border-card);
+            overflow: hidden;
+            margin-bottom: 2rem;
+            background: var(--bg-surface-hover);
+            position: relative;
+        }
+
+        .map-overlay-msg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--overlay-bg);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 1rem;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Phase 17 & 18: ETA Panel */
+        .eta-panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .eta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .eta-item__label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .eta-item__value {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .eta-item__value.highlight {
+            color: var(--accent-success);
+        }
+
+        /* Phase 19: Notifications */
+        .notification-container {
+            position: relative;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+        }
+
+        .notification-bell {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-card);
+            color: var(--text-primary);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .notification-bell:hover {
+            background: var(--bg-surface-hover);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: var(--accent-warning);
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: bold;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--bg-dark);
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            width: 320px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 99999;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .notification-dropdown.active {
+            display: flex;
+        }
+
+        .notification-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-card);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-header h3 {
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .mute-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .mute-toggle input {
+            cursor: pointer;
+        }
+
+        .notification-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            gap: 1rem;
+            transition: background 0.2s;
+        }
+
+        .notification-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .notification-icon {
+            font-size: 1.5rem;
+        }
+
+        .notification-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .notification-text {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .notification-time {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .notification-empty {
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Phase 20: Chat UI Styles */
+        .chat-layout {
+            display: flex;
+            gap: 1.5rem;
+            height: calc(100vh - 160px);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .chat-sidebar {
+            width: 280px;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-sidebar__header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-subtle);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chat-room-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem 0;
+        }
+
+        .chat-room-item {
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .chat-room-item:hover {
+            background: var(--bg-surface-hover);
+        }
+
+        .chat-room-item.active {
+            background: var(--accent-primary-glow);
+            border-left-color: var(--accent-primary);
+        }
+
+        .chat-room-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-surface-hover);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .chat-room-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .notification-item.unread {
+            background: var(--accent-primary-glow);
+        }
+
+        .notification-item__title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.2rem;
+        }
+
+        .notification-item__message {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .notification-item__time {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .chat-room-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-mobile-back {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            margin-right: 0.5rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-window {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        .chat-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-card);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-surface);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            scroll-behavior: smooth;
+        }
+
+        .chat-message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 75%;
+            position: relative;
+        }
+
+        .chat-message-wrapper--own {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .chat-message-wrapper--other {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .chat-message-sender {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.2rem;
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .chat-message {
+            padding: 0.75rem 1rem;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            word-break: break-word;
+            position: relative;
+        }
+
+        .chat-message--own {
+            background: var(--accent-primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-message--other {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-card);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-message--deleted {
+            background: transparent !important;
+            border: 1px dashed var(--border-subtle);
+            color: var(--text-muted) !important;
+            font-style: italic;
+        }
+
+        .chat-message-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .chat-message-actions {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            display: none;
+            gap: 0.5rem;
+            background: var(--bg-surface);
+            padding: 0.3rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            z-index: 10;
+        }
+
+        .chat-message-wrapper--own:hover .chat-message-actions {
+            display: flex;
+            left: -70px;
+        }
+
+        .chat-action-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.2rem;
+            transition: color 0.2s;
+        }
+
+        .chat-action-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .chat-action-btn--delete:hover {
+            color: var(--accent-warm);
+        }
+
+        .chat-input-area {
+            padding: 1rem 1.5rem;
+            background: var(--bg-surface);
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: var(--bg-surface-hover);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            color: var(--text-primary);
+            resize: none;
+            min-height: 24px;
+            max-height: 120px;
+            font-family: inherit;
+            line-height: 1.4;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-primary-glow);
+        }
+
+        .chat-send-btn {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .chat-send-btn:hover {
+            transform: scale(1.05);
+            background: var(--accent-primary-hover);
+        }
+
+        .chat-send-btn:disabled {
+            background: var(--bg-surface-hover);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .chat-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            gap: 1rem;
+        }
+
+        .chat-empty-icon {
+            font-size: 4rem;
+            opacity: 0.2;
+        }
+
+        .load-more-btn {
+            background: var(--bg-surface-hover);
+            border: 1px solid var(--border-card);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .load-more-btn:hover {
+            background: var(--border-subtle);
+        }
+
+        /* Bus Stop List Styles */
+        .bus-stop-list {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .bus-stop-list h3 {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .stop-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .stop-timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 10px;
+            bottom: 10px;
+            width: 2px;
+            background: var(--border-subtle);
+        }
+
+        .stop-timeline-item {
+            position: relative;
+            background: var(--bg-surface);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-card);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stop-timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--bg-surface);
+            border: 2px solid var(--text-muted);
+            z-index: 1;
+        }
+
+        .stop-timeline-item.active {
+            border-color: rgba(37, 99, 235, 0.3);
+            background: rgba(37, 99, 235, 0.03);
+        }
+
+        .stop-timeline-item.active::before {
+            border-color: var(--accent-primary);
+            background: var(--accent-primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        .stop-timeline-item.completed {
+            opacity: 0.7;
+        }
+
+        .stop-timeline-item.completed::before {
+            border-color: var(--accent-success);
+            background: var(--accent-success);
+        }
+
+        .stop-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .stop-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .stop-eta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-card);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-surface-hover);
+        }
+    </style>
+    <!-- Theme Script -->
+    <script src="../js/theme.js"></script>
+</head>
+
+<body>
+    <div class="sidebar-overlay"
+        onclick="document.querySelector('.admin-sidebar').classList.remove('open'); document.querySelector('.sidebar-overlay').classList.remove('open');">
+    </div>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <a href="/" class="logo" style="text-decoration: none; color: inherit;" title="Back to Home Page">
+                    <span class="logo__icon">🚌</span>
+                    <span class="logo__text">SmartBus</span>
+                </a>
+                <div style="display: flex; gap: 10px;">
+                    <button id="theme-toggle-btn" class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme"
+                        style="background:none; border:none; color:var(--text-primary); cursor:pointer; font-size:1.2rem;">☀️</button>
+                    <button class="mobile-close-btn"
+                        onclick="document.querySelector('.admin-sidebar').classList.remove('open'); document.querySelector('.sidebar-overlay').classList.remove('open');"
+                        style="background:none; border:none; color:var(--text-primary); cursor:pointer; font-size:1.5rem; display: none;">×</button>
+                </div>
+            </div>
+
+            <nav class="admin-nav">
+                <a href="#" class="admin-nav__link active" id="nav-dashboard">
+                    <span>🏠</span> Dashboard
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-buses">
+                    <span>🚌</span> Available Buses
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-routes">
+                    <span>🗺️</span> Routes & Stops
+                    <span id="badge-routes" class="nav-badge" style="display: none;">0</span>
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-schedules">
+                    <span>📅</span> Schedules
+                    <span id="badge-schedules" class="nav-badge" style="display: none;">0</span>
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-chat">
+                    <span>💬</span> Bus Chat
+                    <span id="badge-chat" class="nav-badge" style="display: none;">0</span>
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-announcements">
+                    <span>📢</span> Announcements
+                    <span id="badge-announcements" class="nav-badge" style="display: none;">0</span>
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-settings">
+                    <span>⚙️</span> Settings
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-report">
+                    <span>🚩</span> Report Admin
+                    <span id="badge-report" class="nav-badge" style="display: none;">0</span>
+                </a>
+            </nav>
+
+            <div style="margin-top: auto;">
+                <button id="btn-logout" class="btn btn--outline" style="width: 100%;">
+                    <span>🚪</span> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-content">
+            <!-- Header -->
+            <header class="admin-header">
+                <div class="admin-header__title">
+                    <button class="mobile-toggle"
+                        onclick="document.querySelector('.admin-sidebar').classList.toggle('open'); document.querySelector('.sidebar-overlay').classList.toggle('open');">☰</button>
+                    <span id="page-title">Student Dashboard</span>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+
+                    <!-- Notification Bell -->
+                    <div class="notification-container" id="notification-container-main" style="display: flex;">
+                        <button class="notification-bell" id="notification-bell">
+                            🔔
+                            <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                        </button>
+                        <div class="notification-dropdown" id="notification-dropdown">
+                            <div class="notification-header">
+                                <h3>Notifications</h3>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <button id="clear-notifications-btn" class="btn btn--sm btn--outline"
+                                        style="padding: 0.2rem 0.5rem; font-size: 0.75rem; border-color: rgba(255,255,255,0.2); color: var(--text-muted);">Clear
+                                        All</button>
+                                    <label class="mute-toggle" title="Turn off notifications">
+                                        <input type="checkbox" id="mute-notifications-toggle">
+                                        🔇 Mute
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="notification-list" id="notification-list">
+                                <div class="notification-empty">No notifications yet.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Section -->
+            <section id="section-dashboard">
+                <!-- User Welcome Card -->
+                <div class="welcome-card"
+                    style="display: flex; align-items: center; gap: 1rem; background: rgba(255, 255, 255, 0.03); padding: 1rem 1.5rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 2rem;">
+                    <span style="font-size: 2rem;">🎓</span>
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.5rem; color: var(--text-primary);" id="welcome-message">
+                            Welcome!</h2>
+                        <span style="color: var(--text-muted); font-size: 0.9rem;" id="user-name">Loading...</span>
+                    </div>
+                </div>
+
+                <div id="email-verification-banner" style="display: none;">
+                    <p>⚠️ Your email is not verified. Please check your inbox.</p>
+                    <button id="resend-verification-btn" class="btn btn--outline btn--sm"
+                        style="border-color: var(--accent-warning); color: var(--accent-warning);">Resend Email</button>
+                </div>
+
+                <div id="urgent-announcement-banner"
+                    style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-left: 4px solid #ef4444; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+                    <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.5rem;">
+                        <span style="font-size: 1.2rem;">📢</span>
+                        <h3 id="urgent-announcement-title" style="margin: 0; color: #ef4444; font-size: 1.1rem;">Urgent
+                            Announcement</h3>
+                    </div>
+                    <p id="urgent-announcement-message" style="margin: 0; color: var(--text-light); line-height: 1.4;">
+                    </p>
+                    <div style="margin-top: 0.5rem; text-align: right;">
+                        <button class="btn btn--outline btn--sm" id="btn-view-all-announcements"
+                            style="border-color: rgba(239, 68, 68, 0.5); color: #ef4444; padding: 0.3rem 0.8rem; font-size: 0.8rem;">View
+                            All Announcements</button>
+                    </div>
+                </div>
+
+                <div class="welcome-card">
+                    <h2 id="welcome-message">Welcome, Student!</h2>
+                    <p>This is your central hub for tracking university buses. The dashboard will be expanded in
+                        upcoming phases to show real-time bus locations and schedules.</p>
+                </div>
+
+                <!-- Stats Overview -->
+                <div class="admin-stats">
+                    <div class="stat-card">
+                        <span class="stat-card__title">Active Buses</span>
+                        <span class="stat-card__value text-primary" id="stat-active-buses">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Available Routes</span>
+                        <span class="stat-card__value" id="stat-available-routes">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Active Trips</span>
+                        <span class="stat-card__value" id="stat-todays-trips">0</span>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Available Buses Section -->
+            <section id="section-buses" style="display: none;">
+                <div class="driver-grid" id="bus-grid">
+                    <div class="empty-state">
+                        <div
+                            style="width: 40px; height: 40px; border: 3px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;">
+                        </div>
+                        <p>Loading buses...</p>
+                        <style>
+                            @keyframes spin {
+                                to {
+                                    transform: rotate(360deg);
+                                }
+                            }
+                        </style>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Routes & Stops Section -->
+            <section id="section-routes" style="display: none;">
+                <div class="driver-grid" id="route-grid">
+                    <div class="empty-state">
+                        <div
+                            style="width: 40px; height: 40px; border: 3px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;">
+                        </div>
+                        <p>Loading routes...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Schedules Section -->
+            <section id="section-schedules" style="display: none;">
+                <div class="driver-grid" id="schedule-grid">
+                    <div class="empty-state">
+                        <div
+                            style="width: 40px; height: 40px; border: 3px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;">
+                        </div>
+                        <p>Loading schedules...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chat Section -->
+            <section id="section-chat" style="display: none;">
+                <div class="chat-layout">
+                    <!-- Sidebar: Bus List -->
+                    <div class="chat-sidebar">
+                        <div class="chat-sidebar__header">
+                            Available Chats
+                        </div>
+                        <div class="chat-room-list" id="chat-room-list">
+                            <!-- Dynamic list of buses -->
+                            <div class="empty-state" style="padding: 2rem 1rem;">Loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- Main Chat Area -->
+                    <div class="chat-window" id="chat-window">
+                        <div class="chat-empty-state">
+                            <span class="chat-empty-icon">💬</span>
+                            <h2>Select a bus to start chatting</h2>
+                            <p>You can chat with other students in real-time.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bus Details Section -->
+            <section id="section-bus-details" style="display: none;">
+                <div class="bus-details-header">
+                    <button class="btn-back" id="btn-back-buses">
+                        <span>←</span> Back to Buses
+                    </button>
+                    <div>
+                        <h2 id="detail-bus-name" style="margin: 0; color: var(--text-primary);">Bus Name</h2>
+                        <span id="detail-bus-status"
+                            style="font-size: 0.85rem; margin-top: 0.3rem; display: inline-block;"></span>
+                    </div>
+                </div>
+
+                <!-- Map Container -->
+                <div class="map-container" id="bus-map">
+                    <div id="map-overlay" class="map-overlay-msg">
+                        <span style="font-size: 2rem;">⏸️</span>
+                        <h3 style="color: var(--text-primary); margin: 0;">Bus is not running</h3>
+                        <p style="color: var(--text-muted); margin: 0;">Live tracking is only available during an active
+                            trip.</p>
+                    </div>
+                </div>
+
+                <!-- Live ETA Info (Phase 17 & 18) -->
+                <div class="eta-panel" id="eta-panel"
+                    style="display: none; flex-direction: column; align-items: stretch;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;"
+                            id="eta-last-updated">Last Updated: --</span>
+                        <button id="btn-calc-my-location" class="btn btn--sm btn--outline"
+                            style="font-size: 0.75rem; padding: 0.3rem 0.6rem; border-color: var(--accent-primary); color: var(--accent-primary); display: flex; align-items: center; gap: 0.3rem;"><span>📍</span>
+                            Calculate from My Location</button>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
+                        <div class="eta-item">
+                            <span class="eta-item__label" id="eta-dest-label">Destination</span>
+                            <span class="eta-item__value" id="eta-stop-name"
+                                style="font-size: 1rem;">Calculating...</span>
+                        </div>
+                        <div class="eta-item">
+                            <span class="eta-item__label">Distance</span>
+                            <span class="eta-item__value">
+                                <span id="eta-distance">--</span>
+                            </span>
+                        </div>
+                        <div class="eta-item">
+                            <span class="eta-item__label">ETA</span>
+                            <span class="eta-item__value highlight">
+                                <span id="eta-time">--</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div
+                        style="margin-top: 1rem; padding-top: 0.5rem; border-top: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 0.4rem;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">🚌 <span
+                                id="bus-passed-status">Calculating bus position...</span></span>
+                        <span style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500;">➡️ Next Stop:
+                            <span id="bus-next-stop">--</span></span>
+                    </div>
+                </div>
+
+                <!-- Stop Legend (Phase 12) -->
+                <div id="stop-legend"
+                    style="display: none; gap: 1.5rem; align-items: center; padding: 0.75rem 1rem; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 10px; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                    <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-primary);">🗺️ Map
+                        Legend:</span>
+                    <span
+                        style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--text-muted);">
+                        <span
+                            style="width: 14px; height: 14px; background: #00c853; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); display: inline-block;"></span>
+                        Start Point
+                    </span>
+                    <span
+                        style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--text-muted);">
+                        <span
+                            style="width: 14px; height: 14px; background: #448aff; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); display: inline-block;"></span>
+                        Intermediate Stop
+                    </span>
+                    <span
+                        style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--text-muted);">
+                        <span
+                            style="width: 14px; height: 14px; background: #ff4444; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); display: inline-block;"></span>
+                        End Point
+                    </span>
+                    <span
+                        style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">
+                        <span
+                            style="width: 24px; height: 4px; background: var(--accent-primary); display: inline-block;"></span>
+                        Route Path
+                    </span>
+                </div>
+                <p id="no-stops-msg"
+                    style="display: none; color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 0.75rem; background: rgba(255, 255, 255, 0.02); border-radius: 8px; margin-bottom: 1.5rem;">
+                    No route assigned to this bus yet.</p>
+
+                <div class="admin-section__header">
+                    <h2 class="admin-section__title">Schedules & Route</h2>
+                </div>
+                <div class="driver-grid" id="detail-schedule-grid">
+                    <div class="empty-state">
+                        <p>Loading info...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Announcements Section -->
+            <section id="section-announcements" style="display: none;">
+                <div style="margin-bottom: 2rem;">
+                    <h2 style="font-size: 1.5rem; color: var(--text-light); font-weight: 600; margin-bottom: 0.5rem;">
+                        Campus Announcements</h2>
+                    <p style="color: var(--text-muted);">Stay updated with the latest notices and schedule changes.</p>
+                </div>
+
+                <div class="driver-grid" id="student-announcement-grid">
+                    <!-- Loading State -->
+                    <div class="empty-state">
+                        <div
+                            style="width: 40px; height: 40px; border: 3px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;">
+                        </div>
+                        <p>Loading announcements...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="section-settings" style="display: none;">
+                <div style="margin-bottom: 2rem;">
+                    <h2 style="font-size: 1.5rem; color: var(--text-light); font-weight: 600; margin-bottom: 0.5rem;">
+                        Account Settings</h2>
+                    <p style="color: var(--text-muted);">Manage your profile, password, and account settings.</p>
+                </div>
+
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 800px;">
+
+                    <!-- Profile Update Card -->
+                    <div class="settings-card"
+                        style="background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 16px; padding: 2rem;">
+                        <h3
+                            style="font-size: 1.2rem; color: var(--text-primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>👤</span> Profile Information
+                        </h3>
+                        <form id="settings-profile-form">
+                            <div class="form-group">
+                                <label class="form-group__label">Full Name</label>
+                                <input type="text" class="form-group__input" id="settings-name" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-group__label">Email (Read Only)</label>
+                                <input type="email" class="form-group__input" id="settings-email" disabled
+                                    style="opacity: 0.7;">
+                            </div>
+                            <button type="submit" class="btn btn--primary" style="width: 100%; margin-top: 1rem;"
+                                id="btn-update-profile">Update Profile</button>
+                        </form>
+                    </div>
+
+                    <!-- Password Update Card -->
+                    <div class="settings-card"
+                        style="background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 16px; padding: 2rem;">
+                        <h3
+                            style="font-size: 1.2rem; color: var(--text-primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🔒</span> Change Password
+                        </h3>
+                        <form id="settings-password-form">
+                            <div class="form-group">
+                                <label class="form-group__label">Current Password</label>
+                                <input type="password" class="form-group__input" id="settings-current-password"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-group__label">New Password</label>
+                                <input type="password" class="form-group__input" id="settings-new-password" required
+                                    minlength="6">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-group__label">Confirm New Password</label>
+                                <input type="password" class="form-group__input" id="settings-confirm-password" required
+                                    minlength="6">
+                            </div>
+                            <button type="submit" class="btn btn--primary" style="width: 100%; margin-top: 1rem;"
+                                id="btn-update-password">Update Password</button>
+                        </form>
+                    </div>
+
+                    <!-- Danger Zone Card -->
+                    <div class="settings-card"
+                        style="background: rgba(220, 38, 38, 0.05); border: 1px solid rgba(220, 38, 38, 0.2); border-radius: 16px; padding: 2rem; grid-column: 1 / -1;">
+                        <h3
+                            style="font-size: 1.2rem; color: #ef4444; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>⚠️</span> Danger Zone
+                        </h3>
+                        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                            Once you delete your account, there is no going back. Please be certain.
+                        </p>
+                        <button type="button" class="btn btn--outline" style="border-color: #ef4444; color: #ef4444;"
+                            id="btn-delete-account">Delete Account</button>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Report Admin Section -->
+            <section id="section-report" style="display: none;">
+                <div style="margin-bottom: 2rem;">
+                    <h2 style="font-size: 1.5rem; color: var(--text-light); font-weight: 600; margin-bottom: 0.5rem;">
+                        Report to Admin</h2>
+                    <p style="color: var(--text-muted);">Have an issue or a suggestion? Let the admin know by submitting
+                        a report.</p>
+                </div>
+
+                <div class="settings-card"
+                    style="background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 16px; padding: 2rem; max-width: 800px; margin-bottom: 2rem;">
+                    <form id="report-admin-form">
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label class="form-group__label"
+                                style="display: block; margin-bottom: 0.5rem; color: var(--text-primary); font-weight: 500;">Topic</label>
+                            <select id="report-topic" class="form-group__input" required
+                                style="width: 100%; padding: 0.8rem 1rem; border-radius: 12px; background: var(--bg-surface-hover); border: 1px solid var(--border-card); color: var(--text-primary); appearance: none;">
+                                <option value="" disabled selected>Select a topic</option>
+                                <option value="Bus Issue / Delay">Bus Issue / Delay</option>
+                                <option value="Driver Behavior">Driver Behavior</option>
+                                <option value="App Bug / Technical Issue">App Bug / Technical Issue</option>
+                                <option value="Suggestion / Feedback">Suggestion / Feedback</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label class="form-group__label"
+                                style="display: block; margin-bottom: 0.5rem; color: var(--text-primary); font-weight: 500;">Message</label>
+                            <textarea id="report-message" class="form-group__input" rows="5" required
+                                placeholder="Describe your issue or suggestion here..."
+                                style="width: 100%; padding: 0.8rem 1rem; border-radius: 12px; background: var(--bg-surface-hover); border: 1px solid var(--border-card); color: var(--text-primary); resize: vertical; font-family: inherit;"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn--primary" id="btn-submit-report"
+                            style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+                            <span>📤</span> Submit Report
+                        </button>
+                    </form>
+                </div>
+
+                <div style="max-width: 800px;">
+                    <h3 style="font-size: 1.2rem; color: var(--text-primary); margin-bottom: 1rem;">Your Previous
+                        Reports</h3>
+                    <div id="previous-reports-list" style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div class="empty-state" style="padding: 2rem;">
+                            <div
+                                style="width: 40px; height: 40px; border: 3px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;">
+                            </div>
+                            <p style="color: var(--text-muted);">Loading your reports...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script type="module" src="../js/firebase-config.js"></script>
+    <script type="module" src="../js/auth-guard.js"></script>
+    <script type="module" src="../js/student-dashboard.js"></script>
+
+    <!-- Toast Component -->
+    <div id="toast-container" class="toast-container"></div>
+    <script>
+        window.showToast = function (message, type = 'success', duration = 4000) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast--${type}`;
+            let icon = type === 'error' ? '❌' : (type === 'warning' ? '⚠️' : '✅');
+
+            toast.innerHTML = `
+                <div class="toast__icon">${icon}</div>
+                <div class="toast__content"><div class="toast__message">${message}</div></div>
+                <button class="toast__close" aria-label="Close">&times;</button>
+                <div class="toast__progress"></div>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('toast--visible'), 10);
+
+            toast.querySelector('.toast__close').addEventListener('click', () => {
+                toast.classList.remove('toast--visible');
+                setTimeout(() => toast.remove(), 300);
+            });
+
+            if (duration > 0) {
+                setTimeout(() => {
+                    toast.classList.remove('toast--visible');
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>window.location.replace('/#roles');</script>
+    <meta name="description"
+        content="Choose your role to get started with Smart Campus Bus — Student, Driver, or Admin.">
+    <title>Choose Your Role | Smart Campus Bus</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Theme Script -->
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+    <div class="page-wrapper" id="page-wrapper">
+        <!-- Background Glows -->
+        <div class="page-wrapper__bg-glow page-wrapper__bg-glow--top-right"></div>
+        <div class="page-wrapper__bg-glow page-wrapper__bg-glow--bottom-left"></div>
+
+        <!-- Top Links -->
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; padding: 1.5rem; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 100;">
+            <a href="/" class="back-link" id="back-link" style="position: static; margin-bottom: 0;">
+                <span class="back-link__arrow">←</span>
+                Back to Home
+            </a>
+            <button id="theme-toggle-btn" class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme" style="background:var(--bg-surface); color:var(--text-primary); border:1px solid var(--border-card); border-radius:50%; width:36px; height:36px; cursor:pointer; font-size:1.1rem; transition:all 0.2s;">☀️</button>
+        </div>
+
+        <!-- Role Selection Content -->
+        <div class="role-select" id="role-select">
+            <!-- Logo -->
+            <div class="role-select__logo" id="role-select-logo">
+                <span class="logo__icon">🚌</span>
+                <span class="logo__text">SmartBus</span>
+            </div>
+
+            <!-- Heading -->
+            <h1 class="role-select__heading" id="role-select-heading">Choose Your Role</h1>
+            <p class="role-select__subheading" id="role-select-subheading">
+                Select how you want to use Smart Campus Bus
+            </p>
+
+            <!-- Role Cards Grid -->
+            <div class="role-select__grid" id="role-select-grid">
+                <!-- Student Card -->
+                <a href="/pages/login.html?role=student" class="role-select-card role-select-card--student"
+                    id="role-card-student">
+                    <div class="role-select-card__icon-wrapper">
+                        <span>🎓</span>
+                    </div>
+                    <h2 class="role-select-card__title">Student</h2>
+                    <p class="role-select-card__desc">
+                        Track campus buses, view schedules, routes, and live status updates.
+                    </p>
+                    <ul class="role-select-card__features">
+                        <li>View bus schedules</li>
+                        <li>See routes & stops</li>
+                        <li>Check running status</li>
+                        <li>Track buses live</li>
+                    </ul>
+                    <span class="role-select-card__cta">
+                        Continue as Student
+                        <span class="role-select-card__cta-arrow">→</span>
+                    </span>
+                </a>
+
+                <!-- Driver Card -->
+                <a href="/pages/login.html?role=driver" class="role-select-card role-select-card--driver"
+                    id="role-card-driver">
+                    <div class="role-select-card__icon-wrapper">
+                        <span>🚐</span>
+                    </div>
+                    <h2 class="role-select-card__title">Driver</h2>
+                    <p class="role-select-card__desc">
+                        Manage your trips, share your bus location, and update trip status.
+                    </p>
+                    <ul class="role-select-card__features">
+                        <li>Start & end trips</li>
+                        <li>Manage assigned bus</li>
+                        <li>Share GPS location</li>
+                        <li>Update trip status</li>
+                    </ul>
+                    <span class="role-select-card__cta">
+                        Continue as Driver
+                        <span class="role-select-card__cta-arrow">→</span>
+                    </span>
+                </a>
+
+                <!-- Admin Card -->
+                <a href="/pages/login.html?role=admin" class="role-select-card role-select-card--admin" id="role-card-admin">
+                    <div class="role-select-card__icon-wrapper">
+                        <span>🛡️</span>
+                    </div>
+                    <h2 class="role-select-card__title">Admin</h2>
+                    <p class="role-select-card__desc">
+                        Manage the entire bus system — buses, routes, drivers, and settings.
+                    </p>
+                    <ul class="role-select-card__features">
+                        <li>Manage buses & routes</li>
+                        <li>Approve drivers</li>
+                        <li>Post announcements</li>
+                        <li>View analytics</li>
+                    </ul>
+                    <span class="role-select-card__cta">
+                        Admin Login
+                        <span class="role-select-card__cta-arrow">→</span>
+                    </span>
+                </a>
+            </div>
+
+            <!-- Footer -->
+            <p class="role-select__footer" id="role-select-footer">
+                ← <a href="/">Return to Home Page</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="/js/role-select.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>window.location.replace('/dashboard/admin');</script>
+    <title>Admin Dashboard | Smart Campus Bus</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet.js -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../css/style.css">
+    
+    <!-- Inline styles for specific dashboard layout if needed before style.css is updated -->
+    <style>
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--bg-primary);
+        }
+        .admin-sidebar {
+            width: 260px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-subtle);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+        .admin-sidebar .logo {
+            justify-content: flex-start;
+            color: var(--text-sidebar-active);
+        }
+        .admin-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .admin-nav__link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.8rem 1rem;
+            color: var(--text-sidebar);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .admin-nav__link:hover, .admin-nav__link.active {
+            background: var(--bg-sidebar-hover);
+            color: var(--text-sidebar-active);
+        }
+        .nav-badge {
+            background-color: #ef4444;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            margin-left: auto;
+            line-height: 1;
+        }
+        .admin-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 2rem 3rem;
+            overflow-y: auto;
+            width: 100%;
+            background: var(--bg-primary);
+        }
+        
+        /* Mobile Menu */
+        .mobile-toggle {
+            display: none;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0.25rem;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            .admin-content { padding: 1.5rem; }
+            .driver-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+        }
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+                z-index: 1000;
+            }
+            .admin-sidebar.open {
+                transform: translateX(0);
+            }
+            .sidebar-overlay.open {
+                display: block;
+            }
+            .admin-content {
+                margin-left: 0;
+                padding: 1rem 0.75rem;
+            }
+            .mobile-toggle {
+                display: block;
+            }
+            .admin-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+            .driver-grid {
+                grid-template-columns: 1fr;
+            }
+            .admin-header {
+                flex-direction: row;
+                gap: 0.5rem;
+            }
+            .filter-tabs {
+                flex-wrap: wrap;
+            }
+            .admin-section__header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            .modal-content {
+                margin: 1rem;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            .bus-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+        @media (max-width: 480px) {
+            .admin-stats {
+                grid-template-columns: 1fr;
+            }
+            .stat-card__value {
+                font-size: 1.5rem;
+            }
+            .driver-card__actions {
+                flex-direction: column;
+            }
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .admin-header__title {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .admin-user {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--bg-surface);
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            border: 1px solid var(--border-card);
+        }
+        .admin-user__avatar {
+            font-size: 1.2rem;
+        }
+        .admin-user__name {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2.5rem;
+        }
+        .stat-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+        .stat-card__title {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .stat-card__value {
+            color: var(--text-primary);
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .stat-card__value.text-warning { color: var(--accent-warning); }
+        .stat-card__value.text-success { color: var(--accent-success); }
+        .stat-card__value.text-danger { color: var(--accent-warm); }
+        
+        .admin-section__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .admin-section__title {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .filter-tabs {
+            display: flex;
+            background: var(--bg-surface);
+            border-radius: 8px;
+            padding: 0.3rem;
+            border: 1px solid var(--border-card);
+        }
+        .filter-tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+        .filter-tab.active {
+            background: var(--accent-primary);
+            color: var(--text-on-accent);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .driver-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.25rem;
+        }
+        .driver-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+        .driver-card:hover {
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-md);
+        }
+        .driver-card__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .driver-card__info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        .driver-card__name {
+            color: var(--text-primary);
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+        .driver-card__email {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        .status-badge {
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-badge--pending { background: rgba(217, 119, 6, 0.1); color: var(--accent-warning); border: 1px solid rgba(217, 119, 6, 0.2); }
+        .status-badge--active { background: rgba(5, 150, 105, 0.1); color: var(--accent-success); border: 1px solid rgba(5, 150, 105, 0.2); }
+        .status-badge--rejected { background: rgba(220, 38, 38, 0.1); color: var(--accent-warm); border: 1px solid rgba(220, 38, 38, 0.2); }
+        .status-badge--running { 
+            background: rgba(16, 185, 129, 0.15); 
+            color: var(--accent-success); 
+            border: 1px solid rgba(16, 185, 129, 0.3); 
+            animation: pulseRunning 1.5s infinite;
+        }
+        @keyframes pulseRunning {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        
+        .driver-card__details {
+            padding: 1rem 0;
+            border-top: 1px solid var(--border-subtle);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+        }
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        .detail-item__label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+        .detail-item__value {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .driver-card__actions {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        .btn-action {
+            flex: 1;
+            padding: 0.6rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-approve {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--accent-success);
+        }
+        .btn-approve:hover {
+            background: rgba(5, 150, 105, 0.2);
+        }
+        .btn-reject {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--accent-warm);
+        }
+        .btn-reject:hover {
+            background: rgba(220, 38, 38, 0.2);
+        }
+        
+        .empty-state {
+            grid-column: 1 / -1;
+            padding: 3rem 2rem;
+            text-align: center;
+            background: var(--bg-surface);
+            border: 1px dashed var(--border-card);
+            border-radius: 12px;
+            color: var(--text-muted);
+        }
+        .empty-state__icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--overlay-bg);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 500px;
+            padding: 2rem;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .modal-title {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+        
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        
+        .modal-footer {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        /* Bus Card Styles */
+        .bus-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+        .bus-card:hover {
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-md);
+        }
+        
+        /* Route Stops */
+        .route-stop-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .route-stop-item .form-group__input {
+            padding: 0.5rem 1rem;
+        }
+        .btn-remove-stop {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--accent-warm);
+            border: none;
+            border-radius: 6px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-remove-stop:hover {
+            background: rgba(220, 38, 38, 0.2);
+        }
+        .route-stops-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            margin: 1rem 0;
+            padding-left: 1rem;
+            border-left: 2px solid var(--border-card);
+        }
+        .route-stops-list__item {
+            position: relative;
+            padding-left: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .route-stops-list__item::before {
+            content: '';
+            position: absolute;
+            left: -1.4rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            border: 2px solid var(--bg-surface);
+        }
+        .route-stops-list__item:first-child::before {
+            background: var(--accent-success);
+        }
+        .route-stops-list__item:last-child::before {
+            background: var(--accent-warning);
+        }
+
+        /* Map Picker */
+        .map-picker-container {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-card);
+            position: relative;
+        }
+        .map-picker-container #route-map-picker {
+            height: 280px;
+            width: 100%;
+            background: var(--bg-surface-hover);
+        }
+        .map-picker-hint {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: rgba(37, 99, 235, 0.08);
+            border-top: 1px solid rgba(37, 99, 235, 0.15);
+            font-size: 0.75rem;
+            color: var(--accent-primary);
+        }
+        .map-picker-hint .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            animation: pulseRunning 1.5s infinite;
+        }
+        .btn-pick-location {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--accent-primary);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            border-radius: 6px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-pick-location:hover {
+            background: rgba(37, 99, 235, 0.2);
+        }
+        .btn-pick-location.picking {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--accent-success);
+            border-color: rgba(5, 150, 105, 0.2);
+            animation: pulseRunning 1.5s infinite;
+        }
+        .stop-coords {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }
+        .stop-coords.has-coords {
+            color: var(--accent-success);
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-card);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-surface-hover);
+        }
+    </style>
+    <!-- Theme Script -->
+    <script src="../js/theme.js"></script>
+</head>
+
+<body>
+    <div class="sidebar-overlay" onclick="document.querySelector('.admin-sidebar').classList.remove('open'); document.querySelector('.sidebar-overlay').classList.remove('open');"></div>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <a href="/" class="logo" style="text-decoration: none; color: inherit;" title="Back to Home Page">
+                    <span class="logo__icon">🚌</span>
+                    <span class="logo__text">SmartBus</span>
+                </a>
+                <div style="display: flex; gap: 10px;">
+                    <button id="theme-toggle-btn" class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme" style="background:none; border:none; color:var(--text-primary); cursor:pointer; font-size:1.2rem;">☀️</button>
+                    <button class="mobile-close-btn" onclick="document.querySelector('.admin-sidebar').classList.remove('open'); document.querySelector('.sidebar-overlay').classList.remove('open');" style="background:none; border:none; color:var(--text-primary); cursor:pointer; font-size:1.5rem; display: none;">×</button>
+                </div>
+            </div>
+            
+            <nav class="admin-nav">
+                <a href="#" class="admin-nav__link active" id="nav-users">
+                    <span>👤</span> User Management
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-admins">
+                    <span>🛡️</span> Admin Management
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-drivers">
+                    <span>👥</span> Driver Approvals
+                    <span id="badge-drivers" class="nav-badge" style="display: none;">0</span>
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-buses">
+                    <span>🚐</span> Manage Buses
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-routes">
+                    <span>🗺️</span> Routes & Stops
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-schedules">
+                    <span>📅</span> Schedules
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-announcements">
+                    <span>📢</span> Announcements
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-reports">
+                    <span>🚩</span> Student Reports
+                    <span id="badge-reports" class="nav-badge" style="display: none;">0</span>
+                </a>
+                <a href="#" class="admin-nav__link" id="nav-analytics">
+                    <span>📊</span> Analytics
+                </a>
+            </nav>
+            
+            <div style="margin-top: auto;">
+                <button id="btn-logout" class="btn btn--outline" style="width: 100%;">
+                    <span>🚪</span> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-content">
+            <!-- Header -->
+            <header class="admin-header">
+                <div class="admin-header__title">
+                    <button class="mobile-toggle" onclick="document.querySelector('.admin-sidebar').classList.toggle('open'); document.querySelector('.sidebar-overlay').classList.toggle('open');">☰</button>
+                    <span id="page-title">Admin Dashboard</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                </div>
+            </header>
+
+            <!-- Driver Management Section -->
+            <section class="admin-section" id="section-drivers" style="display: none;">
+                <div class="admin-section__header">
+                    <h2 class="admin-section__title">Driver Management</h2>
+                    <div class="filter-tabs" id="filter-tabs">
+                        <button class="filter-tab active" data-filter="all">All</button>
+                        <button class="filter-tab" data-filter="pending">Pending</button>
+                        <button class="filter-tab" data-filter="active">Approved</button>
+                        <button class="filter-tab" data-filter="rejected">Rejected</button>
+                    </div>
+                </div>
+
+                <!-- Stats Overview -->
+                <div class="admin-stats" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <span class="stat-card__title">Total Drivers</span>
+                        <span class="stat-card__value" id="stat-total">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Pending Approvals</span>
+                        <span class="stat-card__value text-warning" id="stat-pending">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Approved Drivers</span>
+                        <span class="stat-card__value text-success" id="stat-approved">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Rejected Applications</span>
+                        <span class="stat-card__value text-danger" id="stat-rejected">0</span>
+                    </div>
+                </div>
+
+                <!-- Driver Grid -->
+                <div class="driver-grid" id="driver-grid">
+                    <!-- Loading State -->
+                    <div class="empty-state">
+                        <div style="width: 40px; height: 40px; border: 3px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                        <p>Loading drivers...</p>
+                        <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+                    </div>
+                </div>
+            </section>
+
+            <!-- User Management Section -->
+            <section class="admin-section" id="section-users">
+                <div class="admin-section__header">
+                    <h2 class="admin-section__title">User Management</h2>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                        <input type="text" id="search-users" class="form-group__input" placeholder="Search by name or email..." style="width: 250px; padding: 0.5rem 1rem;">
+                        <div class="filter-tabs" id="user-filter-tabs">
+                            <button class="filter-tab active" data-filter="all">All</button>
+                            <button class="filter-tab" data-filter="student">Students</button>
+                            <button class="filter-tab" data-filter="driver">Drivers</button>
+                            <button class="filter-tab" data-filter="blocked">Blocked</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Stats Overview -->
+                <div class="admin-stats" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <span class="stat-card__title">Total Users</span>
+                        <span class="stat-card__value" id="user-stat-total">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Students</span>
+                        <span class="stat-card__value text-success" id="user-stat-students">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Drivers</span>
+                        <span class="stat-card__value text-warning" id="user-stat-drivers">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Blocked</span>
+                        <span class="stat-card__value text-danger" id="user-stat-blocked">0</span>
+                    </div>
+                </div>
+
+                <!-- User Grid -->
+                <div class="driver-grid" id="user-grid">
+                    <!-- Loading State -->
+                    <div class="empty-state">
+                        <div style="width: 40px; height: 40px; border: 3px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                        <p>Loading users...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Admin Management Section -->
+            <section class="admin-section" id="section-admins" style="display: none;">
+                <div class="admin-section__header">
+                    <h2 class="admin-section__title">Admin Management</h2>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                        <input type="text" id="search-admins" class="form-group__input" placeholder="Search admins..." style="width: 250px; padding: 0.5rem 1rem;">
+                        <div class="filter-tabs" id="admin-filter-tabs">
+                            <button class="filter-tab active" data-filter="all">All Admins</button>
+                            <button class="filter-tab" data-filter="main">Main Admins</button>
+                            <button class="filter-tab" data-filter="co">Co-Admins</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Grid -->
+                <div class="driver-grid" id="admin-grid">
+                    <!-- Loading State -->
+                    <div class="empty-state">
+                        <div style="width: 40px; height: 40px; border: 3px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                        <p>Loading admins...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bus Management Section -->
+            <section class="admin-section" id="section-buses" style="display: none;">
+                <div class="admin-section__header">
+                    <h2 class="admin-section__title">Bus Management</h2>
+                    <button class="btn btn--primary" id="btn-add-bus">
+                        <span>➕</span> Add Bus
+                    </button>
+                </div>
+
+                <!-- Bus Stats Overview -->
+                <div class="admin-stats" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <span class="stat-card__title">Total Buses</span>
+                        <span class="stat-card__value" id="bus-stat-total">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Active Buses</span>
+                        <span class="stat-card__value text-success" id="bus-stat-active">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Special Trips</span>
+                        <span class="stat-card__value text-warning" id="bus-stat-special">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Inactive / Maint.</span>
+                        <span class="stat-card__value text-danger" id="bus-stat-inactive">0</span>
+                    </div>
+                </div>
+
+                <!-- Bus Grid -->
+                <div class="driver-grid" id="bus-grid">
+                    <!-- Loading State -->
+                    <div class="empty-state">
+                        <div style="width: 40px; height: 40px; border: 3px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                        <p>Loading buses...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Route Management Section -->
+            <section class="admin-section" id="section-routes" style="display: none;">
+                <div class="admin-section__header">
+                    <h2 class="admin-section__title">Routes & Stops</h2>
+                    <button class="btn btn--primary" id="btn-add-route">
+                        <span>➕</span> Add Route
+                    </button>
+                </div>
+
+                <!-- Route Stats Overview -->
+                <div class="admin-stats" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <span class="stat-card__title">Total Routes</span>
+                        <span class="stat-card__value" id="route-stat-total">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Assigned to Bus</span>
+                        <span class="stat-card__value text-success" id="route-stat-assigned">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Unassigned</span>
+                        <span class="stat-card__value text-warning" id="route-stat-unassigned">0</span>
+                    </div>
+                </div>
+
+                <!-- Route Grid -->
+                <div class="driver-grid" id="route-grid">
+                    <!-- Loading State -->
+                    <div class="empty-state">
+                        <div style="width: 40px; height: 40px; border: 3px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                        <p>Loading routes...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Schedule Management Section -->
+            <section class="admin-section" id="section-schedules" style="display: none;">
+                <div class="admin-section__header">
+                    <h2 class="admin-section__title">Schedule Management</h2>
+                    <button class="btn btn--primary" id="btn-add-schedule">
+                        <span>➕</span> Add Schedule
+                    </button>
+                </div>
+
+                <!-- Schedule Stats Overview -->
+                <div class="admin-stats" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <span class="stat-card__title">Total Schedules</span>
+                        <span class="stat-card__value" id="schedule-stat-total">0</span>
+                    </div>
+                </div>
+
+                <!-- Schedule Grid -->
+                <div class="driver-grid" id="schedule-grid">
+                    <!-- Loading State -->
+                    <div class="empty-state">
+                        <div style="width: 40px; height: 40px; border: 3px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                        <p>Loading schedules...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Announcements Section -->
+            <section class="admin-section" id="section-announcements" style="display: none;">
+                <div class="admin-section__header">
+                    <h2 class="admin-section__title">Announcements</h2>
+                    <button class="btn btn--primary" id="btn-add-announcement">
+                        <span>➕</span> Create Announcement
+                    </button>
+                </div>
+
+                <!-- Announcement Stats Overview -->
+                <div class="admin-stats" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <span class="stat-card__title">Total Announcements</span>
+                        <span class="stat-card__value" id="announcement-stat-total">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Urgent Active</span>
+                        <span class="stat-card__value text-warning" id="announcement-stat-urgent">0</span>
+                    </div>
+                </div>
+
+                <!-- Announcement Grid -->
+                <div class="driver-grid" id="announcement-grid">
+                    <!-- Loading State -->
+                    <div class="empty-state">
+                        <div style="width: 40px; height: 40px; border: 3px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                        <p>Loading announcements...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section class="admin-section" id="section-reports" style="display: none;">
+                <div class="admin-section__header">
+                    <h2 class="admin-section__title">Student Reports</h2>
+                    <div class="filter-tabs" id="report-filter-tabs">
+                        <button class="filter-tab active" data-filter="all">All</button>
+                        <button class="filter-tab" data-filter="pending">Pending</button>
+                        <button class="filter-tab" data-filter="processing">Processing</button>
+                        <button class="filter-tab" data-filter="completed">Completed</button>
+                        <button class="filter-tab" data-filter="cancelled">Cancelled</button>
+                    </div>
+                </div>
+
+                <div class="admin-stats" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <span class="stat-card__title">Total Reports</span>
+                        <span class="stat-card__value" id="report-stat-total">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Pending</span>
+                        <span class="stat-card__value text-warning" id="report-stat-pending">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Completed</span>
+                        <span class="stat-card__value text-success" id="report-stat-completed">0</span>
+                    </div>
+                </div>
+
+                <div class="driver-grid" id="report-grid">
+                    <div class="empty-state">
+                        <div style="width: 40px; height: 40px; border: 3px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                        <p>Loading reports...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section class="admin-section" id="section-analytics" style="display: none;">
+                <div class="admin-section__header">
+                    <h2 class="admin-section__title">Analytics Dashboard</h2>
+                </div>
+
+                <div class="admin-stats" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <span class="stat-card__title">Total Students</span>
+                        <span class="stat-card__value text-success" id="analytics-total-students">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Active Drivers</span>
+                        <span class="stat-card__value text-warning" id="analytics-active-drivers">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Total Buses</span>
+                        <span class="stat-card__value text-primary" id="analytics-total-buses">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__title">Active Routes</span>
+                        <span class="stat-card__value text-success" id="analytics-active-routes">0</span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+                    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 1.5rem;">
+                        <h3 style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem; font-weight: 500;">User Role Distribution</h3>
+                        <div style="position: relative; height: 300px; width: 100%;">
+                            <canvas id="chart-user-roles"></canvas>
+                        </div>
+                    </div>
+                    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 1.5rem;">
+                        <h3 style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem; font-weight: 500;">Driver Status Overview</h3>
+                        <div style="position: relative; height: 300px; width: 100%;">
+                            <canvas id="chart-driver-status"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Bus Modal -->
+    <div class="modal-overlay" id="bus-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="bus-modal-title">Add New Bus</h3>
+                <button class="modal-close" id="bus-modal-close">&times;</button>
+            </div>
+            <form id="bus-form">
+                <div class="modal-body">
+                    <input type="hidden" id="bus-id">
+                    <div class="form-group">
+                        <label class="form-group__label">Bus Name</label>
+                        <div class="form-group__input-wrapper">
+                            <input type="text" id="bus-name" class="form-group__input" placeholder="e.g. Campus Express" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label">Bus Number</label>
+                        <div class="form-group__input-wrapper">
+                            <input type="text" id="bus-number" class="form-group__input" placeholder="Free text (e.g. DHA-1234)" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label">Capacity (Optional)</label>
+                        <div class="form-group__input-wrapper">
+                            <input type="number" id="bus-capacity" class="form-group__input" placeholder="e.g. 50">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label">Assign Driver (Optional)</label>
+                        <div class="form-group__input-wrapper">
+                            <select id="bus-driver" class="form-group__input" style="appearance: auto;">
+                                <option value="">-- Select Driver --</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" id="bus-status-group" style="display: none;">
+                        <label class="form-group__label">Status</label>
+                        <div class="form-group__input-wrapper">
+                            <select id="bus-status" class="form-group__input" style="appearance: auto;">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="special_trip">Special Trip</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn--outline" id="bus-modal-cancel">Cancel</button>
+                    <button type="submit" class="btn btn--primary" id="bus-modal-submit">Save Bus</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Route Modal -->
+    <div class="modal-overlay" id="route-modal">
+        <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="route-modal-title">Add New Route</h3>
+                <button class="modal-close" id="route-modal-close">&times;</button>
+            </div>
+            <form id="route-form">
+                <div class="modal-body">
+                    <input type="hidden" id="route-id">
+                    <div class="form-group">
+                        <label class="form-group__label">Route Name</label>
+                        <div class="form-group__input-wrapper">
+                            <input type="text" id="route-name" class="form-group__input" placeholder="e.g. Campus to City Center" required>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-group__label">Start Point</label>
+                            <div class="form-group__input-wrapper">
+                                <input type="text" id="route-start" class="form-group__input" placeholder="e.g. Campus Gate" required>
+                            </div>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-group__label">End Point</label>
+                            <div class="form-group__input-wrapper">
+                                <input type="text" id="route-end" class="form-group__input" placeholder="e.g. City Center" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Map Picker (Phase 12) -->
+                    <div class="form-group">
+                        <label class="form-group__label" style="margin-bottom: 0.5rem;">📍 Stop Locations (click map to place)</label>
+                        <div class="map-picker-container">
+                            <div id="route-map-picker"></div>
+                            <div class="map-picker-hint">
+                                <span class="pulse-dot"></span>
+                                <span id="map-picker-status">Select a stop field, then click the map to set its location.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Start/End Point Coordinates -->
+                    <div style="display: flex; gap: 1rem;">
+                        <div class="form-group" style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <label class="form-group__label">🟢 Start Point</label>
+                                <button type="button" class="btn-pick-location" data-target="start" title="Click then click map">📍 Pick</button>
+                            </div>
+                            <input type="hidden" id="route-start-lat">
+                            <input type="hidden" id="route-start-lng">
+                            <div class="stop-coords" id="route-start-coords">No location set</div>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <label class="form-group__label">🔴 End Point</label>
+                                <button type="button" class="btn-pick-location" data-target="end" title="Click then click map">📍 Pick</button>
+                            </div>
+                            <input type="hidden" id="route-end-lat">
+                            <input type="hidden" id="route-end-lng">
+                            <div class="stop-coords" id="route-end-coords">No location set</div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Stops Container -->
+                    <div class="form-group" style="background: rgba(255, 255, 255, 0.02); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                        <label class="form-group__label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            Intermediate Stops
+                            <button type="button" class="btn btn--sm btn--outline" id="btn-add-stop" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">+ Add Stop</button>
+                        </label>
+                        <div id="route-stops-container" style="display: flex; flex-direction: column;">
+                            <!-- Stop items will be added here dynamically -->
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Note: Start and End points are automatically treated as the first and last stops.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-group__label">Assign Bus (Optional)</label>
+                        <div class="form-group__input-wrapper">
+                            <select id="route-bus" class="form-group__input" style="appearance: auto;">
+                                <option value="">-- Select Bus --</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn--outline" id="route-modal-cancel">Cancel</button>
+                    <button type="submit" class="btn btn--primary" id="route-modal-submit">Save Route</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Schedule Modal -->
+    <div class="modal-overlay" id="schedule-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="schedule-modal-title">Add New Schedule</h3>
+                <button class="modal-close" id="schedule-modal-close">&times;</button>
+            </div>
+            <form id="schedule-form">
+                <div class="modal-body">
+                    <input type="hidden" id="schedule-id">
+                    
+                    <div class="form-group">
+                        <label class="form-group__label">Assign Bus</label>
+                        <div class="form-group__input-wrapper">
+                            <select id="schedule-bus" class="form-group__input" style="appearance: auto;" required>
+                                <option value="">-- Select Bus --</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-group__label">Departure Time(s)</label>
+                        
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <input type="time" id="schedule-time-input" class="form-group__input" style="flex: 1;">
+                            <button type="button" class="btn btn--outline" id="btn-add-time" style="padding: 0 1rem;">Add</button>
+                        </div>
+                        
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                            <button type="button" class="btn btn--sm btn--outline quick-time-btn" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" data-time="08:00">08:00 AM</button>
+                            <button type="button" class="btn btn--sm btn--outline quick-time-btn" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" data-time="10:00">10:00 AM</button>
+                            <button type="button" class="btn btn--sm btn--outline quick-time-btn" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" data-time="12:00">12:00 PM</button>
+                            <button type="button" class="btn btn--sm btn--outline quick-time-btn" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" data-time="14:00">02:00 PM</button>
+                            <button type="button" class="btn btn--sm btn--outline quick-time-btn" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" data-time="16:00">04:00 PM</button>
+                        </div>
+                        
+                        <div id="selected-times-container" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px; min-height: 44px; align-items: center;">
+                            <!-- Selected times tags will appear here -->
+                            <span style="color: var(--text-muted); font-size: 0.85rem;" id="no-times-msg">No times added yet.</span>
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">You can add multiple times to create schedules instantly.</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-group__label" style="margin-bottom: 0.5rem; display: block;">Operating Days</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; background: rgba(255, 255, 255, 0.02); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-light); font-size: 0.9rem; cursor: pointer;">
+                                <input type="checkbox" name="schedule-days" value="Sunday"> Sunday
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-light); font-size: 0.9rem; cursor: pointer;">
+                                <input type="checkbox" name="schedule-days" value="Monday"> Monday
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-light); font-size: 0.9rem; cursor: pointer;">
+                                <input type="checkbox" name="schedule-days" value="Tuesday"> Tuesday
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-light); font-size: 0.9rem; cursor: pointer;">
+                                <input type="checkbox" name="schedule-days" value="Wednesday"> Wednesday
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-light); font-size: 0.9rem; cursor: pointer;">
+                                <input type="checkbox" name="schedule-days" value="Thursday"> Thursday
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-light); font-size: 0.9rem; cursor: pointer;">
+                                <input type="checkbox" name="schedule-days" value="Friday"> Friday
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-light); font-size: 0.9rem; cursor: pointer;">
+                                <input type="checkbox" name="schedule-days" value="Saturday"> Saturday
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn--outline" id="schedule-modal-cancel">Cancel</button>
+                    <button type="submit" class="btn btn--primary" id="schedule-modal-submit">Save Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Component -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Leaflet.js & Plugins -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+
+    
+    <!-- Scripts -->
+    <script type="module" src="../js/firebase-config.js"></script>
+    <script type="module" src="../js/auth-guard.js"></script>
+    <script type="module" src="../js/admin-dashboard.js"></script>
+    <script type="module" src="../js/bus-management.js"></script>
+    <script type="module" src="../js/route-management.js"></script>
+    <script type="module" src="../js/schedule-management.js"></script>
+    <script type="module" src="../js/announcement-management.js"></script>
+    <script type="module" src="../js/analytics.js"></script>
+    <script type="module" src="../js/report-management.js"></script>
+    <script type="module" src="../js/user-management.js"></script>
+    
+    <!-- Announcement Modal -->
+    <div class="modal-overlay" id="announcement-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="announcement-modal-title">Create Announcement</h3>
+                <button class="modal-close" id="announcement-modal-close">&times;</button>
+            </div>
+            <form id="announcement-form">
+                <div class="modal-body">
+                    <input type="hidden" id="announcement-id">
+                    <div class="form-group">
+                        <label class="form-group__label">Title</label>
+                        <div class="form-group__input-wrapper">
+                            <input type="text" id="announcement-title" class="form-group__input" placeholder="e.g. Schedule Change" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-group__label">Type</label>
+                        <div class="form-group__input-wrapper">
+                            <select id="announcement-type" class="form-group__input" required>
+                                <option value="notice">📋 Notice</option>
+                                <option value="alert">⚠️ Alert</option>
+                                <option value="schedule_change">📅 Schedule Change</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-group__label">Priority</label>
+                        <div class="form-group__input-wrapper">
+                            <select id="announcement-priority" class="form-group__input" required>
+                                <option value="normal">Normal</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-group__label">Message</label>
+                        <div class="form-group__input-wrapper">
+                            <textarea id="announcement-message" class="form-group__input" rows="4" placeholder="Type your announcement here..." required></textarea>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn--outline" id="announcement-modal-cancel">Cancel</button>
+                    <button type="submit" class="btn btn--primary">Save Announcement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report Feedback Modal -->
+    <div class="modal-overlay" id="report-feedback-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="report-feedback-modal-title">Provide Feedback</h3>
+                <button class="modal-close" id="report-feedback-modal-close">&times;</button>
+            </div>
+            <form id="report-feedback-form">
+                <div class="modal-body">
+                    <input type="hidden" id="report-action-id">
+                    <input type="hidden" id="report-action-status">
+                    
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;" id="report-feedback-hint">
+                        Leave an optional note for the student. They will see this on their dashboard.
+                    </p>
+                    
+                    <div class="form-group">
+                        <label class="form-group__label">Feedback / Reason (Optional)</label>
+                        <div class="form-group__input-wrapper">
+                            <textarea id="report-feedback-message" class="form-group__input" rows="4" placeholder="e.g. This issue has been fixed in the latest app update..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn--outline" id="report-feedback-modal-cancel">Skip & Save</button>
+                    <button type="submit" class="btn btn--primary" id="report-feedback-modal-submit">Save with Feedback</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Inline toast logic
+        window.showToast = function(message, type = 'success', duration = 4000) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            
+            const toast = document.createElement('div');
+            toast.className = `toast toast--${type}`;
+            let icon = type === 'error' ? '❌' : (type === 'warning' ? '⚠️' : '✅');
+            
+            toast.innerHTML = `
+                <div class="toast__icon">${icon}</div>
+                <div class="toast__content"><div class="toast__message">${message}</div></div>
+                <button class="toast__close" aria-label="Close">&times;</button>
+                <div class="toast__progress"></div>
+            `;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('toast--visible'), 10);
+            
+            toast.querySelector('.toast__close').addEventListener('click', () => {
+                toast.classList.remove('toast--visible');
+                setTimeout(() => toast.remove(), 300);
+            });
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    toast.classList.remove('toast--visible');
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+        };
+    </script>
+</body>
+
+</html>

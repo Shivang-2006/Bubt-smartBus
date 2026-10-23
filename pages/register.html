@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>window.location.replace('/auth');</script>
+    <meta name="description" content="Register for Smart Campus Bus Tracking System.">
+    <title>Register | Smart Campus Bus</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Google Identity Services (GSI) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Theme Script -->
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+    <div class="page-wrapper" id="page-wrapper">
+        <!-- Background Glows -->
+        <div class="page-wrapper__bg-glow page-wrapper__bg-glow--top-right"></div>
+        <div class="page-wrapper__bg-glow page-wrapper__bg-glow--bottom-left"></div>
+
+        <!-- Top Links -->
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; padding: 1.5rem; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 100;">
+            <a href="/pages/role-select.html" class="back-link" id="back-link" style="position: static; margin-bottom: 0;">
+                <span class="back-link__arrow">←</span>
+                Change Role
+            </a>
+            <button id="theme-toggle-btn" class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme" style="background:var(--bg-surface); color:var(--text-primary); border:1px solid var(--border-card); border-radius:50%; width:36px; height:36px; cursor:pointer; font-size:1.1rem; transition:all 0.2s;">☀️</button>
+        </div>
+
+        <!-- Auth Content -->
+        <div class="auth" id="auth">
+            <!-- Logo -->
+            <div class="auth__logo" id="auth-logo">
+                <span class="logo__icon">🚌</span>
+                <span class="logo__text">SmartBus</span>
+            </div>
+
+            <!-- Auth Card -->
+            <div class="auth__card" id="auth-card">
+                <!-- Role Selector Dropdown -->
+                <div class="auth__role-switcher" id="auth-role-switcher">
+                    <button type="button" class="auth__role-badge" id="auth-role-badge" aria-expanded="false" aria-haspopup="true" title="Click to switch role">
+                        <span class="auth__role-badge-icon" id="auth-role-icon">🎓</span>
+                        <span id="auth-role-label">Student</span>
+                        <svg class="auth__role-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="auth__role-dropdown" id="auth-role-dropdown" role="menu">
+                        <a href="/pages/register.html?role=student" class="auth__role-option" data-role="student" role="menuitem">
+                            <span class="auth__role-option-icon">🎓</span>
+                            <span class="auth__role-option-label">Student</span>
+                        </a>
+                        <a href="/pages/register.html?role=driver" class="auth__role-option" data-role="driver" role="menuitem">
+                            <span class="auth__role-option-icon">🚐</span>
+                            <span class="auth__role-option-label">Driver</span>
+                        </a>
+                        <a href="/pages/login.html?role=admin" class="auth__role-option" data-role="admin" role="menuitem" title="Admin Login">
+                            <span class="auth__role-option-icon">🛡️</span>
+                            <span class="auth__role-option-label">Admin (Login)</span>
+                        </a>
+                    </div>
+                </div>
+
+                <h1 class="auth__title" id="auth-title">Create Account</h1>
+                <p class="auth__subtitle" id="auth-subtitle">Register to get started with SmartBus</p>
+
+                <!-- Register Form -->
+                <form id="register-form" novalidate>
+                    <!-- Full Name -->
+                    <div class="form-group" id="form-group-name">
+                        <label class="form-group__label" for="register-name">Full Name</label>
+                        <div class="form-group__input-wrapper">
+                            <span class="form-group__icon">👤</span>
+                            <input type="text" class="form-group__input" id="register-name"
+                                placeholder="Enter your full name" autocomplete="name" required>
+                        </div>
+                        <p class="form-group__error" id="error-name">Full name is required</p>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group" id="form-group-email">
+                        <label class="form-group__label" for="register-email">Email Address</label>
+                        <div class="form-group__input-wrapper">
+                            <span class="form-group__icon">✉️</span>
+                            <input type="email" class="form-group__input" id="register-email"
+                                placeholder="Enter your email" autocomplete="email" required>
+                        </div>
+                        <p class="form-group__error" id="error-email">Please enter a valid email address</p>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-group" id="form-group-password">
+                        <label class="form-group__label" for="register-password">Password</label>
+                        <div class="form-group__input-wrapper">
+                            <span class="form-group__icon">🔒</span>
+                            <input type="password" class="form-group__input" id="register-password"
+                                placeholder="Create a password (min 6 characters)" autocomplete="new-password" required>
+                            <button type="button" class="form-group__toggle-password" id="toggle-password"
+                                aria-label="Toggle password visibility">👁️</button>
+                        </div>
+                        <p class="form-group__error" id="error-password">Password must be at least 6 characters</p>
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="form-group" id="form-group-confirm-password">
+                        <label class="form-group__label" for="register-confirm-password">Confirm Password</label>
+                        <div class="form-group__input-wrapper">
+                            <span class="form-group__icon">🔒</span>
+                            <input type="password" class="form-group__input" id="register-confirm-password"
+                                placeholder="Confirm your password" autocomplete="new-password" required>
+                            <button type="button" class="form-group__toggle-password" id="toggle-confirm-password"
+                                aria-label="Toggle password visibility">👁️</button>
+                        </div>
+                        <p class="form-group__error" id="error-confirm-password">Passwords do not match</p>
+                    </div>
+
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="auth__submit" id="auth-submit">
+                        Create Account
+                    </button>
+                </form>
+
+                <!-- Divider -->
+                <div class="auth__divider" id="auth-divider">or</div>
+
+                <!-- Google Sign-In Button -->
+                <button type="button" class="auth__google-btn" id="auth-google-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M21.35 11.1H12v2.8h5.35c-.24 1.35-.96 2.5-2.05 3.25v2.7h3.3c1.95-1.8 3.05-4.45 3.05-7.75 0-.6-.05-1.15-.15-1.7z" fill="#4285F4"/>
+                        <path d="M12 22c2.7 0 4.95-.9 6.6-2.45l-3.3-2.7c-.9.6-2.05.95-3.3.95-2.55 0-4.7-1.7-5.47-3.95H3.1v2.5C4.75 19.9 8.05 22 12 22z" fill="#34A853"/>
+                        <path d="M6.53 13.85A5.98 5.98 0 0 1 6 12c0-.65.1-1.3.28-1.85V7.65H3.1A9.99 9.99 0 0 0 2 12c0 1.65.4 3.2 1.1 4.6l3.43-2.75z" fill="#FBBC05"/>
+                        <path d="M12 6.15c1.47 0 2.8.5 3.84 1.5l2.87-2.86C16.95 3.2 14.7 2 12 2 8.05 2 4.75 4.1 3.1 7.65l3.48 2.5C7.3 7.85 9.45 6.15 12 6.15z" fill="#EA4335"/>
+                    </svg>
+                    Sign up with Google
+                </button>
+
+                <!-- Login Link -->
+                <div class="auth__footer" id="auth-footer">
+                    Already have an account?
+                    <a href="/pages/login.html" id="auth-login-link">Sign In</a>
+                </div>
+            </div>
+
+            <!-- Change Role -->
+            <p class="auth__change-role" id="auth-change-role">
+                Not your role? <a href="/pages/role-select.html">Choose a different role</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="auth-loading" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(7, 7, 14, 0.8); z-index: 1000; align-items: center; justify-content: center; flex-direction: column;">
+        <div style="width: 40px; height: 40px; border: 4px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <p style="margin-top: 15px; color: white; font-weight: 500;" id="auth-loading-text">Creating account...</p>
+        <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+    </div>
+
+
+
+    <!-- Scripts -->
+    <script type="module" src="/js/firebase-config.js"></script>
+    <script type="module" src="/js/auth.js"></script>
+
+    <!-- Toast Component -->
+    <div id="toast-container" class="toast-container"></div>
+    <script>
+        // Inline toast logic for immediate use before modules load
+        window.showToast = function(message, type = 'success', duration = 4000) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            
+            const toast = document.createElement('div');
+            toast.className = `toast toast--${type}`;
+            let icon = type === 'error' ? '❌' : (type === 'warning' ? '⚠️' : '✅');
+            
+            toast.innerHTML = `
+                <div class="toast__icon">${icon}</div>
+                <div class="toast__content"><div class="toast__message">${message}</div></div>
+                <button class="toast__close" aria-label="Close">&times;</button>
+                <div class="toast__progress"></div>
+            `;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('toast--visible'), 10);
+            
+            toast.querySelector('.toast__close').addEventListener('click', () => {
+                toast.classList.remove('toast--visible');
+                setTimeout(() => toast.remove(), 300);
+            });
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    toast.classList.remove('toast--visible');
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+        };
+    </script>
+</body>
+
+</html>

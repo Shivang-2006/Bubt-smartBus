@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>window.location.replace('/dashboard/student');</script>
+    <meta name="description" content="Verify your email address for Smart Campus Bus Tracking System.">
+    <title>Verify Email | Smart Campus Bus</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Theme Script -->
+    <script src="/js/theme.js"></script>
+
+    <style>
+        .otp-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 1.75rem 0 1.25rem;
+        }
+
+        .otp-input {
+            width: 48px;
+            height: 56px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            border-radius: var(--radius-md, 12px);
+            border: 2px solid var(--border-card, #e2e8f0);
+            background: var(--bg-primary, #f7f8fa);
+            color: var(--text-primary, #1e293b);
+            outline: none;
+            transition: all 0.2s ease;
+            font-family: monospace, var(--font-family);
+        }
+
+        @media (max-width: 480px) {
+            .otp-container {
+                gap: 6px;
+            }
+            .otp-input {
+                width: 40px;
+                height: 50px;
+                font-size: 1.3rem;
+            }
+        }
+
+        .otp-input:focus {
+            border-color: var(--accent-primary, #2563eb);
+            box-shadow: 0 0 0 3px var(--accent-primary-glow, rgba(37, 99, 235, 0.15));
+            transform: translateY(-2px);
+            background: var(--bg-surface, #ffffff);
+        }
+
+        .otp-input.filled {
+            border-color: var(--accent-primary, #2563eb);
+            background: var(--bg-surface, #ffffff);
+        }
+
+        .resend-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary, #475569);
+        }
+
+        .resend-btn {
+            background: none;
+            border: none;
+            color: var(--accent-primary, #2563eb);
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .resend-btn:hover:not(:disabled) {
+            background: var(--accent-primary-subtle, rgba(37, 99, 235, 0.1));
+            text-decoration: underline;
+        }
+
+        .resend-btn:disabled {
+            color: var(--text-muted, #94a3b8);
+            cursor: not-allowed;
+            text-decoration: none;
+        }
+
+        .demo-otp-banner {
+            background: rgba(37, 99, 235, 0.08);
+            border: 1px dashed rgba(37, 99, 235, 0.3);
+            border-radius: var(--radius-md, 12px);
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary, #475569);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .demo-otp-badge {
+            display: inline-block;
+            background: var(--accent-primary, #2563eb);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-wrapper" id="page-wrapper">
+        <!-- Background Glows -->
+        <div class="page-wrapper__bg-glow page-wrapper__bg-glow--top-right"></div>
+        <div class="page-wrapper__bg-glow page-wrapper__bg-glow--bottom-left"></div>
+
+        <!-- Top Navigation -->
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; padding: 1.5rem; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 100;">
+            <a href="/pages/register.html" class="back-link" id="back-link" style="position: static; margin-bottom: 0;">
+                <span class="back-link__arrow">←</span>
+                Back to Register
+            </a>
+            <button id="theme-toggle-btn" class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme" style="background:var(--bg-surface); color:var(--text-primary); border:1px solid var(--border-card); border-radius:50%; width:36px; height:36px; cursor:pointer; font-size:1.1rem; transition:all 0.2s;">☀️</button>
+        </div>
+
+        <!-- Auth Content -->
+        <div class="auth" id="auth">
+            <!-- Logo -->
+            <div class="auth__logo" id="auth-logo">
+                <span class="logo__icon">🚌</span>
+                <span class="logo__text">SmartBus</span>
+            </div>
+
+            <!-- Auth Card -->
+            <div class="auth__card" id="auth-card">
+                <!-- Role Selector Dropdown -->
+                <div class="auth__role-switcher" id="auth-role-switcher">
+                    <button type="button" class="auth__role-badge" id="auth-role-badge" aria-expanded="false" title="Account Role">
+                        <span class="auth__role-badge-icon" id="auth-role-icon">🎓</span>
+                        <span id="auth-role-label">Student</span>
+                    </button>
+                </div>
+
+                <h1 class="auth__title" id="auth-title">Verify Your Email</h1>
+                <p class="auth__subtitle" id="auth-subtitle">
+                    Enter the 6-digit code sent to <strong id="verify-email-text" style="color:var(--text-primary); word-break: break-all;">your email</strong>
+                </p>
+
+                <!-- Demo helper banner showing generated OTP -->
+                <div class="demo-otp-banner" id="demo-otp-banner">
+                    <span>🔑</span>
+                    <div>
+                        <span>Verification code: </span>
+                        <span class="demo-otp-badge" id="active-otp-display">123456</span>
+                    </div>
+                </div>
+
+                <!-- OTP Form -->
+                <form id="otp-form" novalidate>
+                    <div class="otp-container" id="otp-container">
+                        <input type="text" maxlength="1" class="otp-input" data-index="0" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" autofocus required>
+                        <input type="text" maxlength="1" class="otp-input" data-index="1" inputmode="numeric" pattern="[0-9]*" required>
+                        <input type="text" maxlength="1" class="otp-input" data-index="2" inputmode="numeric" pattern="[0-9]*" required>
+                        <input type="text" maxlength="1" class="otp-input" data-index="3" inputmode="numeric" pattern="[0-9]*" required>
+                        <input type="text" maxlength="1" class="otp-input" data-index="4" inputmode="numeric" pattern="[0-9]*" required>
+                        <input type="text" maxlength="1" class="otp-input" data-index="5" inputmode="numeric" pattern="[0-9]*" required>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="auth__submit auth__submit--student" id="verify-submit-btn">
+                        Verify &amp; Continue
+                    </button>
+
+                    <!-- Resend Section -->
+                    <div class="resend-row">
+                        <span id="timer-text">Resend code in <strong id="timer-count">60s</strong></span>
+                        <button type="button" id="resend-btn" class="resend-btn" disabled>Resend Code</button>
+                    </div>
+                </form>
+
+                <!-- Footer / Change Email -->
+                <div class="auth__footer" style="margin-top: 1.5rem; text-align: center;">
+                    Entered the wrong email?
+                    <a href="/pages/register.html" id="change-email-link">Register Again</a>
+                </div>
+            </div>
+
+            <!-- Back to Login -->
+            <p class="auth__change-role" style="margin-top: 1.25rem;">
+                Already verified? <a href="/pages/login.html">Sign In to Account</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="auth-loading" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(7, 7, 14, 0.8); z-index: 1000; align-items: center; justify-content: center; flex-direction: column;">
+        <div style="width: 40px; height: 40px; border: 4px solid rgba(108, 99, 255, 0.3); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <p style="margin-top: 15px; color: white; font-weight: 500;" id="auth-loading-text">Verifying code...</p>
+        <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+    </div>
+
+    <!-- Toast Component -->
+    <div id="toast-container" class="toast-container"></div>
+    <script>
+        window.showToast = function(message, type = 'success', duration = 4000) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            
+            const toast = document.createElement('div');
+            toast.className = `toast toast--${type}`;
+            let icon = type === 'error' ? '❌' : (type === 'warning' ? '⚠️' : '✅');
+            
+            toast.innerHTML = `
+                <div class="toast__icon">${icon}</div>
+                <div class="toast__content"><div class="toast__message">${message}</div></div>
+                <button class="toast__close" aria-label="Close">&times;</button>
+                <div class="toast__progress"></div>
+            `;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('toast--visible'), 10);
+            
+            toast.querySelector('.toast__close').addEventListener('click', () => {
+                toast.classList.remove('toast--visible');
+                setTimeout(() => toast.remove(), 300);
+            });
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    toast.classList.remove('toast--visible');
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+        };
+    </script>
+
+    <!-- Verification Logic Module -->
+    <script type="module">
+        import { auth, db } from "/js/firebase-config.js";
+        import { onAuthStateChanged, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        // 1. Resolve State from URL, sessionStorage, localStorage, or Firebase
+        const urlParams = new URLSearchParams(window.location.search);
+        let userEmail = urlParams.get('email') || 
+                        sessionStorage.getItem('pending_verification_email') || 
+                        localStorage.getItem('pending_verification_email') || 
+                        '';
+
+        let userRole = urlParams.get('role') || 
+                       sessionStorage.getItem('pending_verification_role') || 
+                       localStorage.getItem('pending_verification_role') || 
+                       'student';
+
+        let userUid = urlParams.get('uid') || 
+                      sessionStorage.getItem('pending_verification_uid') || 
+                      '';
+
+        // Role configuration for theming
+        const ROLE_CONFIG = {
+            student: {
+                icon: "🎓",
+                label: "Student",
+                cardClass: "auth__card--student",
+                badgeClass: "auth__role-badge--student",
+                submitClass: "auth__submit--student"
+            },
+            driver: {
+                icon: "🚐",
+                label: "Driver",
+                cardClass: "auth__card--driver",
+                badgeClass: "auth__role-badge--driver",
+                submitClass: "auth__submit--driver"
+            },
+            admin: {
+                icon: "🛡️",
+                label: "Admin",
+                cardClass: "auth__card--admin",
+                badgeClass: "auth__role-badge--admin",
+                submitClass: "auth__submit--admin"
+            }
+        };
+
+        function applyRoleTheme(role) {
+            const config = ROLE_CONFIG[role] || ROLE_CONFIG.student;
+            const badge = document.getElementById('auth-role-badge');
+            const icon = document.getElementById('auth-role-icon');
+            const label = document.getElementById('auth-role-label');
+            const card = document.getElementById('auth-card');
+            const submitBtn = document.getElementById('verify-submit-btn');
+
+            if (badge) {
+                badge.className = `auth__role-badge ${config.badgeClass}`;
+            }
+            if (icon) icon.textContent = config.icon;
+            if (label) label.textContent = config.label;
+            if (card) {
+                card.classList.remove('auth__card--student', 'auth__card--driver', 'auth__card--admin');
+                card.classList.add(config.cardClass);
+            }
+            if (submitBtn) {
+                submitBtn.classList.remove('auth__submit--student', 'auth__submit--driver', 'auth__submit--admin');
+                submitBtn.classList.add(config.submitClass);
+            }
+        }
+
+        applyRoleTheme(userRole);
+
+        // Update email display text
+        const emailTextEl = document.getElementById('verify-email-text');
+        if (emailTextEl) {
+            emailTextEl.textContent = userEmail || 'your registered email';
+        }
+
+        // Initialize active OTP code
+        let activeOtp = sessionStorage.getItem('active_verification_otp') || '123456';
+        const displayOtpEl = document.getElementById('active-otp-display');
+        if (displayOtpEl) {
+            displayOtpEl.textContent = activeOtp;
+        }
+
+        // Listen for Firebase Auth user
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                if (!userEmail) {
+                    userEmail = user.email || '';
+                    if (emailTextEl) emailTextEl.textContent = userEmail;
+                }
+                if (!userUid) {
+                    userUid = user.uid;
+                }
+                // Try fetching Firestore profile to sync role & OTP
+                try {
+                    const docSnap = await getDoc(doc(db, "users", user.uid));
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (data.role && data.role !== userRole) {
+                            userRole = data.role;
+                            applyRoleTheme(userRole);
+                        }
+                        if (data.verificationOtp) {
+                            activeOtp = data.verificationOtp;
+                            sessionStorage.setItem('active_verification_otp', activeOtp);
+                            if (displayOtpEl) displayOtpEl.textContent = activeOtp;
+                        }
+                        if (data.emailVerified) {
+                            // Already verified
+                            redirectAfterSuccess();
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Could not check Firestore profile in OTP view:", e);
+                }
+            }
+        });
+
+        // 2. Setup OTP Input Box Interactions (Auto-focus, Backspace, Paste)
+        const inputs = Array.from(document.querySelectorAll('.otp-input'));
+
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                const val = e.target.value.replace(/[^0-9]/g, '');
+                e.target.value = val ? val[val.length - 1] : '';
+
+                if (e.target.value) {
+                    e.target.classList.add('filled');
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    } else {
+                        // All 6 digits filled -> auto-submit
+                        const fullCode = inputs.map(i => i.value).join('');
+                        if (fullCode.length === 6) {
+                            handleVerifyOtp(fullCode);
+                        }
+                    }
+                } else {
+                    e.target.classList.remove('filled');
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !input.value && index > 0) {
+                    inputs[index - 1].focus();
+                    inputs[index - 1].value = '';
+                    inputs[index - 1].classList.remove('filled');
+                } else if (e.key === 'ArrowLeft' && index > 0) {
+                    inputs[index - 1].focus();
+                } else if (e.key === 'ArrowRight' && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pastedData = (e.clipboardData || window.clipboardData).getData('text').trim();
+                const digits = pastedData.replace(/[^0-9]/g, '').slice(0, 6);
+                
+                if (digits) {
+                    digits.split('').forEach((char, i) => {
+                        if (inputs[i]) {
+                            inputs[i].value = char;
+                            inputs[i].classList.add('filled');
+                        }
+                    });
+                    const nextIdx = Math.min(digits.length, inputs.length - 1);
+                    inputs[nextIdx].focus();
+
+                    if (digits.length === 6) {
+                        handleVerifyOtp(digits);
+                    }
+                }
+            });
+        });
+
+        // Focus first input automatically
+        if (inputs[0]) inputs[0].focus();
+
+        // 3. Countdown Timer and Resend Logic
+        let countdown = 60;
+        let timerInterval = null;
+        const timerCountEl = document.getElementById('timer-count');
+        const timerTextEl = document.getElementById('timer-text');
+        const resendBtn = document.getElementById('resend-btn');
+
+        function startTimer() {
+            countdown = 60;
+            resendBtn.disabled = true;
+            timerTextEl.style.display = 'inline';
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                countdown--;
+                if (timerCountEl) timerCountEl.textContent = `${countdown}s`;
+
+                if (countdown <= 0) {
+                    clearInterval(timerInterval);
+                    timerTextEl.style.display = 'none';
+                    resendBtn.disabled = false;
+                }
+            }, 1000);
+        }
+
+        startTimer();
+
+        resendBtn.addEventListener('click', async () => {
+            resendBtn.disabled = true;
+            
+            // Generate a new 6-digit OTP
+            activeOtp = Math.floor(100000 + Math.random() * 900000).toString();
+            sessionStorage.setItem('active_verification_otp', activeOtp);
+            if (displayOtpEl) displayOtpEl.textContent = activeOtp;
+
+            // Clear inputs
+            inputs.forEach(i => {
+                i.value = '';
+                i.classList.remove('filled');
+            });
+            if (inputs[0]) inputs[0].focus();
+
+            // Resend standard email if user signed in
+            if (auth.currentUser) {
+                try {
+                    await sendEmailVerification(auth.currentUser);
+                } catch (e) {
+                    console.warn("Firebase email verification resend notice:", e);
+                }
+                if (userUid) {
+                    try {
+                        await setDoc(doc(db, "users", userUid), {
+                            verificationOtp: activeOtp,
+                            otpGeneratedAt: serverTimestamp()
+                        }, { merge: true });
+                    } catch (e) {}
+                }
+            }
+
+            if (window.showToast) {
+                window.showToast("A new verification code has been generated!", 'success', 3500);
+            }
+
+            startTimer();
+        });
+
+        // 4. Form Submit Handler
+        const form = document.getElementById('otp-form');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const enteredOtp = inputs.map(i => i.value.trim()).join('');
+            if (enteredOtp.length < 6) {
+                if (window.showToast) {
+                    window.showToast("Please enter all 6 digits of the verification code.", 'warning');
+                } else {
+                    alert("Please enter all 6 digits of the verification code.");
+                }
+                const firstEmpty = inputs.find(i => !i.value);
+                if (firstEmpty) firstEmpty.focus();
+                return;
+            }
+            handleVerifyOtp(enteredOtp);
+        });
+
+        // 5. Verification Execution
+        async function handleVerifyOtp(code) {
+            const submitBtn = document.getElementById('verify-submit-btn');
+            const loadingOverlay = document.getElementById('auth-loading');
+            const loadingText = document.getElementById('auth-loading-text');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Verifying...';
+            if (loadingOverlay) {
+                if (loadingText) loadingText.textContent = 'Verifying security code...';
+                loadingOverlay.style.display = 'flex';
+            }
+
+            // Validation check against activeOtp or default fallback 123456
+            const isValid = (code === activeOtp) || (code === '123456');
+
+            if (!isValid) {
+                setTimeout(() => {
+                    if (loadingOverlay) loadingOverlay.style.display = 'none';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Verify & Continue';
+                    if (window.showToast) {
+                        window.showToast("Invalid verification code. Please check and try again.", 'error');
+                    } else {
+                        alert("Invalid verification code. Please check and try again.");
+                    }
+                    inputs.forEach(i => i.classList.add('error'));
+                    setTimeout(() => inputs.forEach(i => i.classList.remove('error')), 1500);
+                }, 600);
+                return;
+            }
+
+            // Code is valid! Update user record in Firestore
+            try {
+                const targetUid = userUid || (auth.currentUser ? auth.currentUser.uid : null);
+                if (targetUid) {
+                    await setDoc(doc(db, "users", targetUid), {
+                        emailVerified: true,
+                        status: userRole === 'driver' ? 'pending' : 'active',
+                        verifiedAt: serverTimestamp()
+                    }, { merge: true });
+                }
+
+                // Clear temporary OTP state
+                sessionStorage.removeItem('active_verification_otp');
+                sessionStorage.removeItem('pending_verification_email');
+                localStorage.removeItem('pending_verification_email');
+
+                if (window.showToast) {
+                    window.showToast("Email verified successfully! Redirecting to dashboard...", 'success', 2500);
+                }
+
+                setTimeout(() => {
+                    redirectAfterSuccess();
+                }, 900);
+
+            } catch (err) {
+                console.error("Error updating user verification status:", err);
+                // Proceed anyway so student/driver is not trapped
+                if (window.showToast) {
+                    window.showToast("Email verified! Redirecting...", 'success', 2000);
+                }
+                setTimeout(() => {
+                    redirectAfterSuccess();
+                }, 800);
+            }
+        }
+
+        function redirectAfterSuccess() {
+            if (userRole === 'driver') {
+                // If driver is pending approval, take to login with pending notification or driver dashboard
+                window.location.replace("/pages/driver-dashboard.html");
+            } else if (userRole === 'admin') {
+                window.location.replace("/pages/admin-dashboard.html");
+            } else {
+                window.location.replace("/pages/student-dashboard.html");
+            }
+        }
+    </script>
+</body>
+
+</html>

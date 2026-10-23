@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="BUBT SmartBus — Modern University Campus Transit System. Real-time GPS bus tracking, interactive routes, schedule timetables, and rider chat.">
+    <title>BUBT SmartBus | Real-Time Campus Transit Tracking</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Leaflet.js Interactive Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Core Stylesheet -->
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Theme Script -->
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+    <!-- Top Header & Navigation -->
+    <header class="header" id="header">
+        <div class="header__inner">
+            <a href="/" class="logo" id="logo" style="text-decoration:none;">
+                <span class="logo__icon">🚌</span>
+                <span class="logo__text">SmartBus</span>
+            </a>
+            <nav class="nav" id="nav">
+                <a href="/#features" class="nav__link" data-section="features">Features</a>
+                <a href="/#how-it-works" class="nav__link" data-section="how-it-works">How It Works</a>
+                <a href="/#roles" class="nav__link" data-section="roles">Roles</a>
+            </nav>
+            <div class="header__actions">
+                <button id="theme-toggle-btn" class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+                <div id="header-nav-actions" style="display:flex; align-items:center; gap:0.6rem;">
+                    <!-- Populated dynamically by SmartBusApp -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Views Container -->
+    <main id="app-view">
+        
+        <!-- ========================================
+             VIEW 1: LANDING PAGE (DEFAULT)
+             ======================================== -->
+        <div id="view-landing" class="app-view-section">
+            <!-- Hero Section -->
+            <section class="hero" id="hero">
+                <div class="hero__shape hero__shape--1"></div>
+                <div class="hero__shape hero__shape--2"></div>
+                <div class="hero__shape hero__shape--3"></div>
+                <div class="hero__content">
+                    <h1 class="hero__title" id="hero-title">
+                        Your campus bus,<br>
+                        <span class="hero__title--accent">right where you are.</span>
+                    </h1>
+                    <p class="hero__subtitle" id="hero-subtitle">
+                        No more waiting at the stop wondering. See where your bus is, when it'll arrive, and where it's going.
+                    </p>
+                    <a href="/auth" class="btn btn--primary" id="hero-btn-try">
+                        Try it now →
+                    </a>
+                    <div class="hero__stats" id="hero-stats">
+                        <div class="hero__stat">
+                            <span class="hero__stat-number" id="hero-stat-buses">12</span>
+                            <span class="hero__stat-label">buses running</span>
+                        </div>
+                        <div class="hero__stat">
+                            <span class="hero__stat-number" id="hero-stat-routes">8</span>
+                            <span class="hero__stat-label">routes covered</span>
+                        </div>
+                        <div class="hero__stat">
+                            <span class="hero__stat-number" id="hero-stat-students">1,450+</span>
+                            <span class="hero__stat-label">students using</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Numbered Features Section -->
+            <section class="features" id="features">
+                <div class="features__inner">
+                    <h2 class="features__heading">What you can do</h2>
+                    <div class="features__list" id="features-grid">
+                        <div class="feature-card" id="feature-schedules">
+                            <span class="feature-card__num">01</span>
+                            <div>
+                                <h3 class="feature-card__title">Check schedules</h3>
+                                <p class="feature-card__desc">See when every bus departs and arrives across all campus lines.</p>
+                            </div>
+                        </div>
+                        <div class="feature-card" id="feature-routes">
+                            <span class="feature-card__num">02</span>
+                            <div>
+                                <h3 class="feature-card__title">Explore routes</h3>
+                                <p class="feature-card__desc">View all stops on an interactive map with live route geometries.</p>
+                            </div>
+                        </div>
+                        <div class="feature-card" id="feature-tracking">
+                            <span class="feature-card__num">03</span>
+                            <div>
+                                <h3 class="feature-card__title">Track live</h3>
+                                <p class="feature-card__desc">Follow your bus in real time with continuous GPS broadcast updates.</p>
+                            </div>
+                        </div>
+                        <div class="feature-card" id="feature-status">
+                            <span class="feature-card__num">04</span>
+                            <div>
+                                <h3 class="feature-card__title">Know the status</h3>
+                                <p class="feature-card__desc">Running, waiting, or delayed — stay instantly informed.</p>
+                            </div>
+                        </div>
+                        <div class="feature-card" id="feature-eta">
+                            <span class="feature-card__num">05</span>
+                            <div>
+                                <h3 class="feature-card__title">Get ETAs</h3>
+                                <p class="feature-card__desc">Know exactly when your bus will reach your stop with dynamic estimates.</p>
+                            </div>
+                        </div>
+                        <div class="feature-card" id="feature-chat">
+                            <span class="feature-card__num">06</span>
+                            <div>
+                                <h3 class="feature-card__title">Chat with riders</h3>
+                                <p class="feature-card__desc">Share updates and coordinate with fellow students on the same line.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- How It Works Section -->
+            <section class="how-it-works" id="how-it-works">
+                <div class="how-it-works__inner">
+                    <h2 class="how-it-works__heading">Three steps, that's it</h2>
+                    <div class="steps" id="steps">
+                        <div class="step" id="step-1">
+                            <span class="step__num">1</span>
+                            <div class="step__block">
+                                <h3 class="step__title">Pick your role</h3>
+                                <p class="step__desc">Student, driver, or admin — choose who you are.</p>
+                            </div>
+                        </div>
+                        <div class="step" id="step-2">
+                            <span class="step__num">2</span>
+                            <div class="step__block">
+                                <h3 class="step__title">Sign up</h3>
+                                <p class="step__desc">Create your account instantly in under a minute with zero OTP delays.</p>
+                            </div>
+                        </div>
+                        <div class="step" id="step-3">
+                            <span class="step__num">3</span>
+                            <div class="step__block">
+                                <h3 class="step__title">Start moving</h3>
+                                <p class="step__desc">Track buses, view schedules, and commute with total confidence.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Roles Section -->
+            <section class="roles" id="roles">
+                <div class="roles__inner">
+                    <div class="roles__text">
+                        <span class="roles__label">Who it's for</span>
+                        <h2 class="roles__heading">Everyone on campus</h2>
+                        <p class="roles__desc">Different needs, one unified transit application.</p>
+                    </div>
+                    <div class="roles__cards" id="roles-grid">
+                        <div class="role-card role-card--student" id="role-student">
+                            <div class="role-card__icon">🎓</div>
+                            <h3 class="role-card__title">Students</h3>
+                            <p class="role-card__desc">Find your bus, check live stop arrivals, and never miss your class.</p>
+                            <button id="role-card-student-btn" class="btn btn--primary btn--sm">Get started</button>
+                        </div>
+                        <div class="role-card role-card--driver" id="role-driver">
+                            <div class="role-card__icon">🚐</div>
+                            <h3 class="role-card__title">Drivers</h3>
+                            <p class="role-card__desc">Manage trips, progress stops, and share live location with campus riders.</p>
+                            <button id="role-card-driver-btn" class="btn btn--primary btn--sm">Get started</button>
+                        </div>
+                        <div class="role-card role-card--admin" id="role-admin">
+                            <div class="role-card__icon">🛡️</div>
+                            <h3 class="role-card__title">Admins</h3>
+                            <p class="role-card__desc">Manage fleet assets, monitor routes, inspect ridership, and view analytics.</p>
+                            <button id="role-card-admin-btn" class="btn btn--primary btn--sm">Get started</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="footer" id="footer">
+                <div class="footer__inner">
+                    <span>🚌 SmartBus</span>
+                    <div class="footer__links">
+                        <a href="/#features" data-section="features">Features</a>
+                        <a href="/#how-it-works" data-section="how-it-works">How It Works</a>
+                        <a href="/#roles" data-section="roles">Roles</a>
+                    </div>
+                    <span class="footer__copy">&copy; <span id="footer-copy-year">2026</span> BUBT SmartBus. All rights reserved.</span>
+                </div>
+            </footer>
+        </div>
+
+        <!-- ========================================
+             VIEW 2: STUDENT DASHBOARD
+             ======================================== -->
+        <div id="view-student" class="app-view-section" style="display:none;">
+            <div class="admin-layout" id="student-layout">
+                <!-- Mobile Sidebar Overlay -->
+                <div class="sidebar-overlay" id="student-sidebar-overlay"></div>
+
+                <!-- Vertical Left Sidebar Navigation -->
+                <aside class="admin-sidebar" id="student-sidebar">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <a href="/" class="logo" id="student-sidebar-logo" style="text-decoration: none; color: inherit;" title="Back to Home Page">
+                            <span class="logo__icon">🚌</span>
+                            <span class="logo__text">SmartBus</span>
+                        </a>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button id="student-theme-toggle-btn" class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+                            <button class="mobile-close-btn" id="student-mobile-close-btn" style="background:none; border:none; color:var(--text-primary); cursor:pointer; font-size:1.5rem; display:none;">&times;</button>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Menu Items -->
+                    <nav class="admin-nav" id="student-admin-nav">
+                        <a href="#dashboard" class="admin-nav__link" id="nav-student-dashboard" data-tab="dashboard">
+                            <span>🏠</span> Dashboard
+                        </a>
+                        <a href="#buses" class="admin-nav__link active" id="nav-student-buses" data-tab="buses">
+                            <span>🚌</span> Available Buses
+                        </a>
+                        <a href="#routes" class="admin-nav__link" id="nav-student-routes" data-tab="routes">
+                            <span>🗺️</span> Routes &amp; Stops
+                            <span id="badge-routes" class="nav-badge">!</span>
+                        </a>
+                        <a href="#schedules" class="admin-nav__link" id="nav-student-schedules" data-tab="schedules">
+                            <span>📅</span> Schedules
+                            <span id="badge-schedules" class="nav-badge">!</span>
+                        </a>
+                        <a href="#chat" class="admin-nav__link" id="nav-student-chat" data-tab="chat">
+                            <span>💬</span> Bus Chat
+                            <span id="badge-chat" class="nav-badge">2</span>
+                        </a>
+                        <a href="#announcements" class="admin-nav__link" id="nav-student-announcements" data-tab="announcements">
+                            <span>📢</span> Announcements
+                            <span id="badge-announcements" class="nav-badge">!</span>
+                        </a>
+                        <a href="#settings" class="admin-nav__link" id="nav-student-settings" data-tab="settings">
+                            <span>⚙️</span> Settings
+                        </a>
+                        <a href="#report" class="admin-nav__link" id="nav-student-report" data-tab="report">
+                            <span>🚩</span> Report Admin
+                        </a>
+                    </nav>
+
+                    <!-- Bottom Pinned Logout -->
+                    <div style="margin-top: auto;">
+                        <button id="student-btn-logout" class="btn btn--outline" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.7rem;">
+                            <span>🚪</span> Logout
+                        </button>
+                    </div>
+                </aside>
+
+                <!-- Main Content Pane -->
+                <main class="admin-content" id="student-main-content">
+                    <!-- Top Header -->
+                    <header class="admin-header">
+                        <div class="admin-header__title">
+                            <button class="mobile-toggle" id="student-mobile-toggle">☰</button>
+                            <span id="student-page-title">Available Buses</span>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <!-- Notification Bell -->
+                            <div class="notification-container" id="student-notif-container">
+                                <button class="notification-bell" id="student-notif-bell" title="Notifications">
+                                    🔔
+                                    <span class="notification-badge" id="student-notif-badge">3</span>
+                                </button>
+                                <div class="notification-dropdown" id="student-notif-dropdown">
+                                    <div class="notification-header">
+                                        <h3 style="margin:0; font-size:1rem; font-weight:700;">Notifications</h3>
+                                        <button id="student-clear-notifs-btn" class="btn btn--sm btn--outline" style="padding:0.2rem 0.5rem; font-size:0.75rem;">Clear All</button>
+                                    </div>
+                                    <div class="notification-list" id="student-notif-list">
+                                        <div class="notification-item">
+                                            <span>🚌</span>
+                                            <div>
+                                                <strong>Brahmaputra-1 Departed</strong>
+                                                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">Departed Sony Cinema Square, heading to BUBT Campus.</div>
+                                            </div>
+                                        </div>
+                                        <div class="notification-item">
+                                            <span>🟢</span>
+                                            <div>
+                                                <strong>Route 2 on Schedule</strong>
+                                                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">Uttara Commuter is running smoothly without traffic delays.</div>
+                                            </div>
+                                        </div>
+                                        <div class="notification-item">
+                                            <span>📢</span>
+                                            <div>
+                                                <strong>Evening Shuttles Active</strong>
+                                                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">Exam special evening transit buses begin departures at 06:00 PM.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Student User Pill -->
+                            <div class="admin-user" id="student-user-pill">
+                                <span class="admin-user__avatar">🎓</span>
+                                <span class="admin-user__name" id="student-user-pill-name">Alex Chen</span>
+                            </div>
+                        </div>
+                    </header>
+
+                    <!-- TAB 1: Available Buses (DEFAULT ACTIVE) -->
+                    <section id="student-tab-buses" class="student-tab-pane" style="display: block;">
+                        <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                            <p style="color: var(--text-muted); margin: 0; font-size: 0.95rem;">
+                                Live status of all operational university campus shuttles. Click any bus to view real-time GPS telemetry and stop ETAs.
+                            </p>
+                            <span class="badge-status badge-status--active">🟢 4 Active Fleet Shuttles</span>
+                        </div>
+
+                        <!-- Stacked Full-Width Dark Bus Cards -->
+                        <div id="student-bus-grid" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                            <!-- Populated dynamically by SmartBusApp.renderStudentBusCards() -->
+                        </div>
+                    </section>
+
+                    <!-- TAB 2: Bus Live Map & Details (Activated when clicking View Live Map & Details) -->
+                    <section id="student-tab-bus-details" class="student-tab-pane" style="display: none;">
+                        <div class="bus-details-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+                            <button class="btn-back" id="btn-back-to-buses">
+                                <span>←</span> Back to Available Buses
+                            </button>
+                            <div style="text-align:right;">
+                                <h2 id="detail-bus-name" style="margin: 0; font-size:1.4rem; color: var(--text-primary); font-weight:800;">Brahmaputra-1</h2>
+                                <span id="detail-bus-status" style="margin-top:4px; display:inline-block;"></span>
+                            </div>
+                        </div>
+
+                        <!-- Leaflet Live Map -->
+                        <div class="map-container" id="student-live-map-wrap" style="height:420px; border-radius:14px; border:1px solid var(--border-card); overflow:hidden; position:relative; margin-bottom:1.5rem; background:#0f172a;">
+                            <div id="live-map-container" style="width:100%; height:100%;"></div>
+                        </div>
+
+                        <!-- Live ETA Telemetry Panel -->
+                        <div class="eta-panel" id="student-eta-panel">
+                            <div class="eta-item">
+                                <span class="eta-item__label">Destination</span>
+                                <span class="eta-item__value" id="detail-eta-destination">BUBT Main Campus</span>
+                            </div>
+                            <div class="eta-item">
+                                <span class="eta-item__label">Distance</span>
+                                <span class="eta-item__value" id="detail-eta-distance">2.4 km</span>
+                            </div>
+                            <div class="eta-item">
+                                <span class="eta-item__label">Estimated Arrival</span>
+                                <span class="eta-item__value highlight" id="detail-eta-time">~6 mins</span>
+                            </div>
+                            <div class="eta-item">
+                                <span class="eta-item__label">Approaching Next Stop</span>
+                                <span class="eta-item__value" id="detail-eta-next-stop" style="color:var(--accent-primary);">Sony Cinema Square</span>
+                            </div>
+                        </div>
+
+                        <!-- Stop Progress Timeline -->
+                        <div class="dash-card">
+                            <div class="dash-card__header">
+                                <h2 class="dash-card__title">
+                                    <span>⏱️</span> Route Stop Timeline &amp; ETAs
+                                </h2>
+                                <span style="font-size:0.8rem; color:var(--text-muted);" id="detail-route-code">Route BL-01</span>
+                            </div>
+                            <div class="dash-card__body">
+                                <div id="student-stops-timeline">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- TAB 3: Dashboard Overview -->
+                    <section id="student-tab-dashboard" class="student-tab-pane" style="display: none;">
+                        <div class="welcome-card" style="display: flex; align-items: center; gap: 1.25rem; background: rgba(59, 130, 246, 0.06); padding: 1.5rem; border-radius: 14px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 2rem;">
+                            <span style="font-size: 2.5rem;">🎓</span>
+                            <div>
+                                <h2 style="margin: 0; font-size: 1.4rem; color: var(--text-primary); font-weight:800;" id="dashboard-welcome-heading">Welcome back, Alex!</h2>
+                                <p style="color: var(--text-muted); margin: 4px 0 0; font-size: 0.9rem;">
+                                    Track campus buses in real time, view departure timetables, and stay updated on university transit announcements.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 3 Stats Cards -->
+                        <div class="admin-stats" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem; margin-bottom:2rem;">
+                            <div class="stat-card">
+                                <span class="stat-card__title">Active Buses</span>
+                                <span class="stat-card__value text-primary" id="student-stat-active-buses">4</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-card__title">Available Routes</span>
+                                <span class="stat-card__value" id="student-stat-available-routes">4</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-card__title">Active Trips Today</span>
+                                <span class="stat-card__value" id="student-stat-active-trips" style="color:var(--accent-secondary);">3</span>
+                            </div>
+                        </div>
+
+                        <!-- Quick Action Overview -->
+                        <div style="background:var(--bg-surface); border:1px solid var(--border-card); border-radius:14px; padding:1.5rem;">
+                            <h3 style="margin:0 0 1rem; font-size:1.1rem; color:var(--text-primary); font-weight:700;">Quick Transit Guide</h3>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:1rem;">
+                                <div style="background:var(--bg-primary); padding:1rem; border-radius:10px; border:1px solid var(--border-card);">
+                                    <div style="font-weight:700; color:var(--text-primary); margin-bottom:4px;">🚌 Live Bus Tracking</div>
+                                    <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Switch to Available Buses to see moving GPS markers and approaching stop counts.</p>
+                                </div>
+                                <div style="background:var(--bg-primary); padding:1rem; border-radius:10px; border:1px solid var(--border-card);">
+                                    <div style="font-weight:700; color:var(--text-primary); margin-bottom:4px;">💬 Rider Chat</div>
+                                    <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Ask fellow riders about seat availability and traffic conditions in real time.</p>
+                                </div>
+                                <div style="background:var(--bg-primary); padding:1rem; border-radius:10px; border:1px solid var(--border-card);">
+                                    <div style="font-weight:700; color:var(--text-primary); margin-bottom:4px;">📢 Announcements</div>
+                                    <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Check urgent schedule changes, road diversions, and holiday shuttle hours.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- TAB 4: Routes & Stops -->
+                    <section id="student-tab-routes" class="student-tab-pane" style="display: none;">
+                        <div style="margin-bottom:1.5rem;">
+                            <p style="color:var(--text-muted); margin:0; font-size:0.95rem;">
+                                Detailed list of campus transit routes, operational hours, frequencies, and all scheduled pick-up stations.
+                            </p>
+                        </div>
+                        <div id="student-routes-detailed-container" style="display:flex; flex-direction:column; gap:1.25rem;">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </section>
+
+                    <!-- TAB 5: Schedules -->
+                    <section id="student-tab-schedules" class="student-tab-pane" style="display: none;">
+                        <div style="margin-bottom:1.5rem;">
+                            <p style="color:var(--text-muted); margin:0; font-size:0.95rem;">
+                                Regular weekday and exam period shuttle timetables for all four university lines.
+                            </p>
+                        </div>
+                        <div id="student-schedules-container" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:1.25rem;">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </section>
+
+                    <!-- TAB 6: Bus Chat -->
+                    <section id="student-tab-chat" class="student-tab-pane" style="display: none;">
+                        <div class="dash-card rider-chat-card" style="height: 580px;">
+                            <div class="dash-card__header">
+                                <h2 class="dash-card__title">
+                                    <span>💬</span> Campus Rider Community Board
+                                </h2>
+                                <span style="font-size:0.78rem; color:var(--accent-secondary); font-weight:700;">🟢 Live Feed</span>
+                            </div>
+                            <div class="rider-chat-messages" id="rider-chat-messages">
+                                <!-- Populated dynamically -->
+                            </div>
+                            <div class="rider-chat-input-row">
+                                <input type="text" id="rider-chat-input" class="rider-chat-input" placeholder="Type a message or transit question to campus riders..." />
+                                <button id="btn-send-chat" class="btn btn--primary btn--sm" style="border-radius:var(--radius-md); padding:0.6rem 1.25rem; font-weight:700;">Send</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- TAB 7: Announcements -->
+                    <section id="student-tab-announcements" class="student-tab-pane" style="display: none;">
+                        <div style="display:flex; flex-direction:column; gap:1rem;">
+                            <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-left: 4px solid #ef4444; padding: 1.25rem; border-radius: 10px;">
+                                <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem;">
+                                    <span style="font-size: 1.2rem;">📢</span>
+                                    <h3 style="margin: 0; color: #ef4444; font-size: 1.05rem; font-weight:700;">Urgent: Midterm Exam Shuttle Schedule Active</h3>
+                                </div>
+                                <p style="margin: 0; color: var(--text-primary); font-size:0.9rem; line-height: 1.5;">
+                                    Extra shuttles have been deployed on Route 1 (Mirpur-10 Express) and Route 2 (Uttara Commuter) during morning examination slots (08:00 AM – 10:00 AM).
+                                </p>
+                                <span style="display:block; font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem;">Posted by Campus Transport Office &bull; 2 hours ago</span>
+                            </div>
+
+                            <div style="background: var(--bg-surface); border: 1px solid var(--border-card); border-left: 4px solid var(--accent-primary); padding: 1.25rem; border-radius: 10px;">
+                                <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem;">
+                                    <span style="font-size: 1.2rem;">ℹ️</span>
+                                    <h3 style="margin: 0; color: var(--accent-primary); font-size: 1.05rem; font-weight:700;">Route 3 Road Diversion Near Farmgate</h3>
+                                </div>
+                                <p style="margin: 0; color: var(--text-primary); font-size:0.9rem; line-height: 1.5;">
+                                    Due to metro line road surface work near Farmgate Ananda Point, buses on Motijheel Line may experience a 5-8 minute detour delay.
+                                </p>
+                                <span style="display:block; font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem;">Posted by Campus Transport Office &bull; Yesterday</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- TAB 8: Settings -->
+                    <section id="student-tab-settings" class="student-tab-pane" style="display: none;">
+                        <div class="dash-card" style="max-width: 640px;">
+                            <div class="dash-card__header">
+                                <h2 class="dash-card__title">
+                                    <span>⚙️</span> Student Account Preferences
+                                </h2>
+                            </div>
+                            <div class="dash-card__body">
+                                <div class="form-group">
+                                    <label class="form-group__label">Student Full Name</label>
+                                    <input type="text" id="settings-student-name" class="form-input-dark" value="Alex Chen" readonly />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-group__label">Student Email</label>
+                                    <input type="email" id="settings-student-email" class="form-input-dark" value="student@bubt.edu" readonly />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-group__label">Default Campus Line</label>
+                                    <select class="form-input-dark">
+                                        <option>Route 1: Mirpur 10 - Campus</option>
+                                        <option>Route 2: Uttara - Campus</option>
+                                        <option>Route 3: Motijheel - Campus</option>
+                                        <option>Route 4: Savar - Campus</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-group__label">Transit Alert Notifications</label>
+                                    <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">
+                                        <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; color:var(--text-secondary); cursor:pointer;">
+                                            <input type="checkbox" checked /> Bus arrival notification (5 mins prior)
+                                        </label>
+                                        <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; color:var(--text-secondary); cursor:pointer;">
+                                            <input type="checkbox" checked /> Urgent service disruptions &amp; weather notices
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- TAB 9: Report Admin -->
+                    <section id="student-tab-report" class="student-tab-pane" style="display: none;">
+                        <div class="dash-card" style="max-width: 640px;">
+                            <div class="dash-card__header">
+                                <h2 class="dash-card__title">
+                                    <span>🚩</span> Report an Issue to Transport Administration
+                                </h2>
+                            </div>
+                            <div class="dash-card__body">
+                                <form id="student-report-form">
+                                    <div class="form-group">
+                                        <label class="form-group__label">Issue Category</label>
+                                        <select class="form-input-dark" id="report-category">
+                                            <option>Bus Schedule Delay / Late Arrival</option>
+                                            <option>Driver Conduct or Safety Feedback</option>
+                                            <option>Lost &amp; Found Item on Campus Shuttle</option>
+                                            <option>New Route or Stop Request</option>
+                                            <option>Vehicle Maintenance Issue</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-group__label">Associated Bus / Route</label>
+                                        <input type="text" id="report-bus" class="form-input-dark" placeholder="e.g. Brahmaputra-1 (DHA-001)" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-group__label">Description &amp; Incident Details</label>
+                                        <textarea id="report-desc" class="form-input-dark" rows="4" placeholder="Provide details regarding the time, location, and issue..." required></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn--primary" style="font-weight:700;">Submit Incident Report</button>
+                                </form>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+            </div>
+        </div>
+
+        <!-- ========================================
+             VIEW 3: DRIVER DASHBOARD
+             ======================================== -->
+        <div id="view-driver" class="app-view-section" style="display:none;">
+            <div class="dash-content" style="max-width:960px;">
+                <div style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+                    <div>
+                        <div style="font-size:0.85rem; color:var(--accent-secondary); font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">
+                            🚐 Driver Telemetry Cockpit
+                        </div>
+                        <h1 style="font-size:1.75rem; font-weight:800; color:var(--text-primary); margin:0;">
+                            Welcome, <span id="driver-greeting-name">Driver</span>!
+                        </h1>
+                    </div>
+                    <div>
+                        <span id="driver-trip-status-badge" class="badge-status badge-status--active">TRIP IN PROGRESS</span>
+                    </div>
+                </div>
+
+                <!-- Trip Controller Hero -->
+                <div class="driver-control-hero">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; text-align:left;">
+                        <div>
+                            <span style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Assigned Vehicle</span>
+                            <div style="font-size:1.4rem; font-weight:800; color:var(--text-primary);" id="driver-assigned-bus-number">BUS-01</div>
+                            <span style="font-size:0.85rem; color:var(--text-secondary); font-family:monospace;" id="driver-assigned-plate">DH-11-2041</span>
+                        </div>
+                        <div style="min-width:240px;">
+                            <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">Assigned Route</label>
+                            <select id="driver-route-select" class="form-input-dark" style="padding:0.5rem 0.75rem;">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="background:rgba(15, 23, 42, 0.75); border:1px solid var(--border-card); border-radius:12px; padding:1.25rem; margin-bottom:1.5rem;">
+                        <span style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Next Target Stop</span>
+                        <div id="driver-current-stop-name" style="font-size:1.35rem; font-weight:800; color:#3b82f6; margin-top:4px;">
+                            Sony Cinema Square
+                        </div>
+                        <div style="font-size:0.8rem; color:#10b981; margin-top:4px;">🟢 Broadcasting GPS Location (5s Interval)</div>
+                    </div>
+
+                    <!-- Action Controls -->
+                    <div class="driver-actions-row">
+                        <button id="btn-driver-start" class="btn-trip-action btn-trip-start">
+                            <span>▶</span> Start Trip
+                        </button>
+                        <button id="btn-driver-next" class="btn-trip-action btn-trip-next">
+                            <span>⏩</span> Next Stop
+                        </button>
+                        <button id="btn-driver-stop" class="btn-trip-action btn-trip-stop">
+                            <span>⏹</span> Complete Trip
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Passenger Counter & Telemetry Panel -->
+                <div class="dash-grid-2">
+                    <div class="dash-card">
+                        <div class="dash-card__header">
+                            <h2 class="dash-card__title"><span>👥</span> Passenger Counter</h2>
+                            <span style="font-size:0.8rem; color:var(--text-muted);">Capacity: 45</span>
+                        </div>
+                        <div class="dash-card__body" style="text-align:center;">
+                            <div class="passenger-stepper">
+                                <button id="btn-pass-minus" class="btn-step">−</button>
+                                <div class="passenger-count-display" id="driver-passenger-count">28</div>
+                                <button id="btn-pass-plus" class="btn-step">+</button>
+                            </div>
+                            <p style="font-size:0.85rem; color:var(--text-secondary); margin:0;">Tap to update live seat availability for student riders.</p>
+                        </div>
+                    </div>
+
+                    <div class="dash-card">
+                        <div class="dash-card__header">
+                            <h2 class="dash-card__title"><span>📡</span> Telemetry Status</h2>
+                            <span class="badge-status badge-status--active">Online</span>
+                        </div>
+                        <div class="dash-card__body">
+                            <div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid var(--border-card);">
+                                <span style="font-size:0.85rem; color:var(--text-secondary);">GPS Engine</span>
+                                <strong style="font-size:0.85rem; color:#10b981;">Hardware Lock (Accurate ~4m)</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid var(--border-card);">
+                                <span style="font-size:0.85rem; color:var(--text-secondary);">Update Frequency</span>
+                                <strong style="font-size:0.85rem; color:var(--text-primary);">Every 5.0 seconds</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; padding:0.5rem 0;">
+                                <span style="font-size:0.85rem; color:var(--text-secondary);">Campus Hub Sync</span>
+                                <strong style="font-size:0.85rem; color:var(--accent-primary);">Real-time Active</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================
+             VIEW 4: ADMIN DASHBOARD
+             ======================================== -->
+        <div id="view-admin" class="app-view-section" style="display:none;">
+            <div class="dash-content">
+                <div style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+                    <div>
+                        <div style="font-size:0.85rem; color:var(--accent-warm); font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">
+                            🛡️ Operations &amp; Fleet Command
+                        </div>
+                        <h1 style="font-size:1.75rem; font-weight:800; color:var(--text-primary); margin:0;">
+                            Welcome, <span id="admin-greeting-name">Administrator</span>!
+                        </h1>
+                    </div>
+                    <div>
+                        <button id="btn-admin-add-bus" class="btn btn--primary btn--sm" style="gap:6px;">
+                            <span>➕</span> Add New Bus
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4 Quick Metric Cards -->
+                <div class="dash-grid-4">
+                    <div class="dash-card" style="padding:1.25rem;">
+                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Active Fleet</span>
+                        <div style="font-size:2rem; font-weight:800; color:#3b82f6; margin-top:4px;">12</div>
+                        <span style="font-size:0.78rem; color:#10b981;">● 100% operational</span>
+                    </div>
+                    <div class="dash-card" style="padding:1.25rem;">
+                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Today's Riders</span>
+                        <div style="font-size:2rem; font-weight:800; color:#10b981; margin-top:4px;">1,450+</div>
+                        <span style="font-size:0.78rem; color:var(--text-secondary);">Commuters served</span>
+                    </div>
+                    <div class="dash-card" style="padding:1.25rem;">
+                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">On-Time Rate</span>
+                        <div style="font-size:2rem; font-weight:800; color:#f59e0b; margin-top:4px;">94.2%</div>
+                        <span style="font-size:0.78rem; color:#10b981;">↑ +1.4% vs last week</span>
+                    </div>
+                    <div class="dash-card" style="padding:1.25rem;">
+                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Active Corridors</span>
+                        <div style="font-size:2rem; font-weight:800; color:#8b5cf6; margin-top:4px;">8</div>
+                        <span style="font-size:0.78rem; color:var(--text-secondary);">Campus bus lines</span>
+                    </div>
+                </div>
+
+                <!-- Fleet Table Section -->
+                <div class="dash-card" style="margin-bottom:2rem;">
+                    <div class="dash-card__header">
+                        <h2 class="dash-card__title">
+                            <span>🚌</span> Fleet Asset Registry
+                        </h2>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">Live updates enabled</span>
+                    </div>
+                    <div class="fleet-table-wrap">
+                        <table class="fleet-table">
+                            <thead>
+                                <tr>
+                                    <th>Bus Number</th>
+                                    <th>License Plate</th>
+                                    <th>Assigned Route</th>
+                                    <th>Assigned Driver</th>
+                                    <th>Capacity</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-fleet-table-body">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Routes Overview Section -->
+                <div class="dash-card">
+                    <div class="dash-card__header">
+                        <h2 class="dash-card__title">
+                            <span>🗺️</span> Campus Bus Routes Directory
+                        </h2>
+                    </div>
+                    <div class="dash-card__body">
+                        <div id="admin-routes-summary">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ========================================
+         UNIFIED AUTH MODAL (ZERO OTP, INSTANT DEMO)
+         ======================================== -->
+    <div id="auth-modal" class="auth-modal-overlay">
+        <div class="auth-modal-card">
+            <button id="auth-modal-close" class="auth-modal-close" aria-label="Close modal">&times;</button>
+
+            <!-- Tabs: Sign In vs Register -->
+            <div class="auth-tabs-nav">
+                <button id="tab-btn-signin" class="auth-tab-btn is-active">Sign In</button>
+                <button id="tab-btn-register" class="auth-tab-btn">Create Account</button>
+            </div>
+
+            <div class="auth-modal-body">
+                <!-- 1-Click Quick Demo Login Section -->
+                <div class="demo-pill-group">
+                    <div class="demo-pill-title">
+                        <span>⚡</span>
+                        <span>1-Click Evaluator Demo Logins</span>
+                    </div>
+                    <div class="demo-pill-grid">
+                        <button id="demo-login-student" class="btn-demo-pill btn-demo-pill--student">
+                            <span style="font-size:1.1rem;">🎓</span>
+                            <span>Student</span>
+                        </button>
+                        <button id="demo-login-driver" class="btn-demo-pill btn-demo-pill--driver">
+                            <span style="font-size:1.1rem;">🚐</span>
+                            <span>Driver</span>
+                        </button>
+                        <button id="demo-login-admin" class="btn-demo-pill btn-demo-pill--admin">
+                            <span style="font-size:1.1rem;">🛡️</span>
+                            <span>Admin</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form: Sign In -->
+                <form id="auth-form-signin">
+                    <div class="form-group">
+                        <label class="form-group__label" for="signin-email">Email or University ID</label>
+                        <input type="text" id="signin-email" class="form-input-dark" placeholder="student@bubt.edu or driver@bubt.edu" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label" for="signin-password">Password</label>
+                        <input type="password" id="signin-password" class="form-input-dark" placeholder="Enter your password" required />
+                    </div>
+                    <button type="submit" class="auth__submit auth__submit--student" style="margin-top:0.5rem;">
+                        Sign In Directly
+                    </button>
+                </form>
+
+                <!-- Form: Register -->
+                <form id="auth-form-register" style="display:none;">
+                    <div class="form-group">
+                        <label class="form-group__label" for="register-name">Full Name</label>
+                        <input type="text" id="register-name" class="form-input-dark" placeholder="e.g. Alex Chen" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label" for="register-email">Email or University ID</label>
+                        <input type="text" id="register-email" class="form-input-dark" placeholder="user@bubt.edu" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label" for="register-password">Password</label>
+                        <input type="password" id="register-password" class="form-input-dark" placeholder="Create a password" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label" for="register-role">Select Role</label>
+                        <select id="register-role" class="form-input-dark">
+                            <option value="student">🎓 Student</option>
+                            <option value="driver">🚐 Driver</option>
+                            <option value="admin">🛡️ Administrator</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="auth__submit auth__submit--student" style="margin-top:0.5rem;">
+                        Create Account &amp; Enter (Zero OTP)
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         ADMIN ADD BUS MODAL
+         ======================================== -->
+    <div id="admin-add-bus-modal" class="auth-modal-overlay">
+        <div class="auth-modal-card" style="max-width:440px;">
+            <button id="admin-add-bus-close" class="auth-modal-close">&times;</button>
+            <div style="padding:1.5rem; border-bottom:1px solid var(--border-card);">
+                <h3 style="font-size:1.15rem; font-weight:800; color:var(--text-primary); margin:0;">➕ Add Campus Bus Asset</h3>
+            </div>
+            <div style="padding:1.5rem;">
+                <form id="admin-add-bus-form">
+                    <div class="form-group">
+                        <label class="form-group__label">Bus Number / Code</label>
+                        <input type="text" id="new-bus-number" class="form-input-dark" placeholder="e.g. BUS-05" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label">License Plate Number</label>
+                        <input type="text" id="new-plate-number" class="form-input-dark" placeholder="e.g. DH-11-9876" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label">Assigned Route</label>
+                        <select id="new-route-id" class="form-input-dark">
+                            <option value="route_1">Route 1: Mirpur-10 Express</option>
+                            <option value="route_2">Route 2: Uttara Commuter</option>
+                            <option value="route_3">Route 3: Motijheel Line</option>
+                            <option value="route_4">Route 4: Savar Shuttle</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label">Driver Name</label>
+                        <input type="text" id="new-driver-name" class="form-input-dark" placeholder="e.g. Tariqul Islam" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label">Passenger Capacity</label>
+                        <input type="number" id="new-capacity" class="form-input-dark" value="45" min="10" max="80" required />
+                    </div>
+                    <button type="submit" class="auth__submit auth__submit--student" style="margin-top:0.75rem;">
+                        Save &amp; Commission Bus
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Leaflet.js Interactive Map Engine -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- SmartBus Unified Application Engine -->
+    <script src="/js/smartbus.js"></script>
+</body>
+
+</html>
