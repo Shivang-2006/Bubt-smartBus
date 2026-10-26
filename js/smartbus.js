@@ -1,73 +1,73 @@
 /**
- * BUBT SmartBus — Modern Unified Transit Engine
+ * RKGIT SmartBus — Modern Unified Transit Engine (Ghaziabad Local Routes)
  * 100% English • Zero OTP • Instant Demo Logins • Real-Time Interactive Simulator
  */
 
-// ── Initial Mock Campus Transit Data ──
+// ── Initial Mock Campus Transit Data (Ghaziabad / RKGIT Local Routes) ──
 const DEFAULT_ROUTES = [
     {
         id: 'route_1',
-        name: 'Route 1: Mirpur-10 Express',
-        code: 'BL-01',
+        name: 'Route 1: Anand Vihar - RKGIT Express',
+        code: 'AV-01',
         color: '#3b82f6',
         frequency: '10 mins',
-        hours: '07:00 AM – 09:30 PM',
+        hours: '06:45 AM – 09:30 PM',
         status: 'On Route',
         stops: [
-            { name: 'BUBT Main Campus (Mirpur 2)', lat: 23.8122, lng: 90.3582, eta: 'At Station' },
-            { name: 'Sony Cinema Square', lat: 23.8090, lng: 90.3620, eta: '4 min' },
-            { name: 'Mirpur-10 Circle Gate', lat: 23.8071, lng: 90.3686, eta: '8 min' },
-            { name: 'Kazipara Bus Stand', lat: 23.7990, lng: 90.3735, eta: '12 min' },
-            { name: 'Shewrapara Overpass', lat: 23.7895, lng: 90.3750, eta: '16 min' },
-            { name: 'Agargaon Science Hub', lat: 23.7780, lng: 90.3770, eta: '22 min' }
+            { name: 'Anand Vihar ISBT / Metro', lat: 28.6469, lng: 77.3160, eta: 'At Station' },
+            { name: 'Mohan Nagar Metro Station', lat: 28.6788, lng: 77.3828, eta: '5 min' },
+            { name: 'Raj Nagar Extension', lat: 28.7050, lng: 77.4200, eta: '12 min' },
+            { name: 'Old Bus Stand Ghaziabad', lat: 28.6675, lng: 77.4360, eta: '18 min' },
+            { name: 'Meerut Road Industrial Area', lat: 28.6850, lng: 77.4450, eta: '23 min' },
+            { name: 'RKGIT Main Campus Gate', lat: 28.6967, lng: 77.4526, eta: '28 min' }
         ]
     },
     {
         id: 'route_2',
-        name: 'Route 2: Uttara Commuter',
-        code: 'RD-02',
+        name: 'Route 2: Noida City Centre - RKGIT Shuttle',
+        code: 'ND-02',
         color: '#10b981',
         frequency: '15 mins',
-        hours: '06:45 AM – 09:00 PM',
+        hours: '07:00 AM – 09:00 PM',
         status: 'On Route',
         stops: [
-            { name: 'BUBT Main Campus (Mirpur 2)', lat: 23.8122, lng: 90.3582, eta: 'At Station' },
-            { name: 'Mirpur-1 Commerce College', lat: 23.8015, lng: 90.3540, eta: '6 min' },
-            { name: 'Technical Junction', lat: 23.7845, lng: 90.3525, eta: '14 min' },
-            { name: 'Airport Road Crossing', lat: 23.8480, lng: 90.4030, eta: '28 min' },
-            { name: 'Uttara House Building (Sector 7)', lat: 23.8685, lng: 90.3980, eta: '35 min' }
+            { name: 'Noida City Centre Metro', lat: 28.5747, lng: 77.3560, eta: 'At Station' },
+            { name: 'Noida Sector 62 / Electronic City', lat: 28.6280, lng: 77.3730, eta: '8 min' },
+            { name: 'CISF Camp Indirapuram', lat: 28.6415, lng: 77.3750, eta: '14 min' },
+            { name: 'Mohan Nagar Metro Station', lat: 28.6788, lng: 77.3828, eta: '22 min' },
+            { name: 'RKGIT Main Campus Gate', lat: 28.6967, lng: 77.4526, eta: '32 min' }
         ]
     },
     {
         id: 'route_3',
-        name: 'Route 3: Motijheel Line',
-        code: 'GN-03',
+        name: 'Route 3: Vaishali / Kaushambi Line',
+        code: 'VS-03',
         color: '#f59e0b',
         frequency: '12 mins',
         hours: '07:15 AM – 08:30 PM',
         status: 'Delayed',
         stops: [
-            { name: 'BUBT Main Campus (Mirpur 2)', lat: 23.8122, lng: 90.3582, eta: 'At Station' },
-            { name: 'Farmgate Ananda Point', lat: 23.7570, lng: 90.3880, eta: '18 min' },
-            { name: 'Shahbagh Square', lat: 23.7380, lng: 90.3955, eta: '26 min' },
-            { name: 'Paltan Intersection', lat: 23.7335, lng: 90.4120, eta: '32 min' },
-            { name: 'Motijheel Commercial Area', lat: 23.7290, lng: 90.4185, eta: '38 min' }
+            { name: 'Kaushambi Metro Station', lat: 28.6455, lng: 77.3242, eta: 'At Station' },
+            { name: 'Vaishali Metro Station', lat: 28.6498, lng: 77.3398, eta: '6 min' },
+            { name: 'Vasundhara Sector 14', lat: 28.6640, lng: 77.3680, eta: '12 min' },
+            { name: 'Hindon River Metro Station', lat: 28.6780, lng: 77.4120, eta: '18 min' },
+            { name: 'RKGIT Main Campus Gate', lat: 28.6967, lng: 77.4526, eta: '27 min' }
         ]
     },
     {
         id: 'route_4',
-        name: 'Route 4: Savar Shuttle',
-        code: 'PP-04',
+        name: 'Route 4: Dilshad Garden Commuter',
+        code: 'DG-04',
         color: '#8b5cf6',
         frequency: '20 mins',
         hours: '06:30 AM – 08:00 PM',
         status: 'At Station',
         stops: [
-            { name: 'BUBT Main Campus (Mirpur 2)', lat: 23.8122, lng: 90.3582, eta: 'At Station' },
-            { name: 'Gabtoli Inter-District Terminal', lat: 23.7815, lng: 90.3440, eta: '10 min' },
-            { name: 'Aminbazar Bridge', lat: 23.7870, lng: 90.3320, eta: '18 min' },
-            { name: 'Hemayetpur Point', lat: 23.8050, lng: 90.2780, eta: '28 min' },
-            { name: 'Savar Bus Stand', lat: 23.8465, lng: 90.2580, eta: '42 min' }
+            { name: 'Dilshad Garden Metro Station', lat: 28.6759, lng: 77.3214, eta: 'At Station' },
+            { name: 'Shaheed Nagar Metro', lat: 28.6750, lng: 77.3350, eta: '5 min' },
+            { name: 'Rajendra Nagar Metro', lat: 28.6770, lng: 77.3580, eta: '10 min' },
+            { name: 'Mohan Nagar Metro Station', lat: 28.6788, lng: 77.3828, eta: '16 min' },
+            { name: 'RKGIT Main Campus Gate', lat: 28.6967, lng: 77.4526, eta: '25 min' }
         ]
     }
 ];
@@ -75,68 +75,68 @@ const DEFAULT_ROUTES = [
 const DEFAULT_BUSES = [
     {
         id: 'bus_101',
-        name: 'Brahmaputra-1',
-        busNumber: 'DHA-001',
-        plateNumber: 'DH-11-2041',
+        name: 'Campus Express-1',
+        busNumber: 'UP-14-BT-101',
+        plateNumber: 'UP-14-BT-101',
         routeId: 'route_1',
-        routeName: 'Mirpur 10 - Campus',
-        driverName: 'Rafiqul Islam',
-        capacity: 45,
-        currentOccupancy: 28,
+        routeName: 'Anand Vihar - RKGIT Express',
+        driverName: 'Rajesh Sharma',
+        capacity: 50,
+        currentOccupancy: 32,
         status: 'Active',
-        speedKmh: 32,
+        speedKmh: 35,
         currentStopIndex: 1
     },
     {
         id: 'bus_102',
-        name: 'Buriganga-002',
-        busNumber: 'DHA-2',
-        plateNumber: 'DH-11-3092',
+        name: 'Noida Shuttle-02',
+        busNumber: 'UP-14-BT-102',
+        plateNumber: 'UP-14-BT-102',
         routeId: 'route_2',
-        routeName: 'Uttara - Campus',
-        driverName: 'Abdul Karim',
-        capacity: 40,
-        currentOccupancy: 32,
+        routeName: 'Noida - RKGIT Shuttle',
+        driverName: 'Suresh Kumar',
+        capacity: 45,
+        currentOccupancy: 28,
         status: 'Active',
-        speedKmh: 28,
+        speedKmh: 30,
         currentStopIndex: 2
     },
     {
         id: 'bus_103',
-        name: 'Padma Express',
-        busNumber: 'DHA-003',
-        plateNumber: 'DH-11-8410',
+        name: 'Vaishali Line-03',
+        busNumber: 'UP-14-BT-103',
+        plateNumber: 'UP-14-BT-103',
         routeId: 'route_3',
-        routeName: 'Motijheel - Campus',
-        driverName: 'Jahangir Alam',
+        routeName: 'Vaishali - RKGIT',
+        driverName: 'Manoj Verma',
         capacity: 50,
-        currentOccupancy: 42,
+        currentOccupancy: 44,
         status: 'Active',
-        speedKmh: 24,
-        currentStopIndex: 0
+        speedKmh: 28,
+        currentStopIndex: 1
     },
     {
         id: 'bus_104',
-        name: 'Meghna Shuttle',
-        busNumber: 'DHA-004',
-        plateNumber: 'DH-11-5521',
+        name: 'Dilshad Runner-04',
+        busNumber: 'UP-14-BT-104',
+        plateNumber: 'UP-14-BT-104',
         routeId: 'route_4',
-        routeName: 'Savar - Campus',
-        driverName: 'Selim Hossain',
+        routeName: 'Dilshad Garden - RKGIT',
+        driverName: 'Dinesh Yadav',
         capacity: 45,
-        currentOccupancy: 19,
+        currentOccupancy: 20,
         status: 'Active',
-        speedKmh: 35,
+        speedKmh: 32,
         currentStopIndex: 0
     },
     {
         id: 'bus_105',
-        name: 'Jamuna Line',
-        busNumber: 'DHA-005',
-        plateNumber: 'DH-11-9876',
+        name: 'Ghaziabad Standby-05',
+        busNumber: 'UP-14-BT-105',
+        plateNumber: 'UP-14-BT-105',
         routeId: null,
         routeName: 'Current Route Unassigned',
-        driverName: 'Tariqul Islam',
+        driverName: 'Ramesh Singh',
         capacity: 45,
         currentOccupancy: 0,
         status: 'Inactive',
@@ -146,10 +146,10 @@ const DEFAULT_BUSES = [
 ];
 
 const DEFAULT_CHAT = [
-    { id: 1, author: 'Alex Chen', role: 'Student', text: 'Brahmaputra-1 just departed Sony Cinema square, moving on schedule!', time: '2 mins ago', isSelf: false },
-    { id: 2, author: 'Sultana Razia', role: 'Student', text: 'Are there seats available on Buriganga-002 towards Uttara?', time: '4 mins ago', isSelf: false },
-    { id: 3, author: 'Rafiqul Islam', role: 'Driver', text: 'Hello riders, Brahmaputra-1 has ~17 seats available. Next stop Mirpur-10 Circle.', time: '5 mins ago', isSelf: false },
-    { id: 4, author: 'Tanvir Ahmed', role: 'Student', text: 'Thanks driver! Waiting at Mirpur-10 Circle Gate.', time: '7 mins ago', isSelf: false }
+    { id: 1, author: 'Alex Chen', role: 'Student', text: 'Campus Express-1 just departed Anand Vihar ISBT, moving on schedule!', time: '2 mins ago', isSelf: false },
+    { id: 2, author: 'Priya Sharma', role: 'Student', text: 'Are there seats available on Noida Shuttle-02 towards RKGIT?', time: '4 mins ago', isSelf: false },
+    { id: 3, author: 'Rajesh Sharma', role: 'Driver', text: 'Hello riders, Campus Express-1 has ~18 seats available. Approaching Mohan Nagar Metro Station.', time: '5 mins ago', isSelf: false },
+    { id: 4, author: 'Aman Verma', role: 'Student', text: 'Thanks driver! Waiting at Mohan Nagar Metro Station.', time: '7 mins ago', isSelf: false }
 ];
 
 // ── Local Storage Data Store ──
@@ -159,37 +159,37 @@ class SmartBusStore {
     }
 
     init() {
-        if (!localStorage.getItem('smartbus_routes_v3')) {
-            localStorage.setItem('smartbus_routes_v3', JSON.stringify(DEFAULT_ROUTES));
+        if (!localStorage.getItem('smartbus_routes_v4')) {
+            localStorage.setItem('smartbus_routes_v4', JSON.stringify(DEFAULT_ROUTES));
         }
-        if (!localStorage.getItem('smartbus_buses_v3')) {
-            localStorage.setItem('smartbus_buses_v3', JSON.stringify(DEFAULT_BUSES));
+        if (!localStorage.getItem('smartbus_buses_v4')) {
+            localStorage.setItem('smartbus_buses_v4', JSON.stringify(DEFAULT_BUSES));
         }
-        if (!localStorage.getItem('smartbus_chat_v3')) {
-            localStorage.setItem('smartbus_chat_v3', JSON.stringify(DEFAULT_CHAT));
+        if (!localStorage.getItem('smartbus_chat_v4')) {
+            localStorage.setItem('smartbus_chat_v4', JSON.stringify(DEFAULT_CHAT));
         }
     }
 
     getRoutes() {
-        return JSON.parse(localStorage.getItem('smartbus_routes_v3')) || DEFAULT_ROUTES;
+        return JSON.parse(localStorage.getItem('smartbus_routes_v4')) || DEFAULT_ROUTES;
     }
 
     getBuses() {
-        return JSON.parse(localStorage.getItem('smartbus_buses_v3')) || DEFAULT_BUSES;
+        return JSON.parse(localStorage.getItem('smartbus_buses_v4')) || DEFAULT_BUSES;
     }
 
     saveBuses(buses) {
-        localStorage.setItem('smartbus_buses_v3', JSON.stringify(buses));
+        localStorage.setItem('smartbus_buses_v4', JSON.stringify(buses));
     }
 
     getChat() {
-        return JSON.parse(localStorage.getItem('smartbus_chat_v3')) || DEFAULT_CHAT;
+        return JSON.parse(localStorage.getItem('smartbus_chat_v4')) || DEFAULT_CHAT;
     }
 
     addChatMessage(msg) {
         const chat = this.getChat();
         chat.push(msg);
-        localStorage.setItem('smartbus_chat_v3', JSON.stringify(chat));
+        localStorage.setItem('smartbus_chat_v4', JSON.stringify(chat));
         return chat;
     }
 
@@ -539,6 +539,8 @@ class SmartBusApp {
         if (!bus) return;
 
         this.currentRouteId = bus.routeId || 'route_1';
+        const routes = this.store.getRoutes();
+        const selectedRoute = routes.find(r => r.id === this.currentRouteId) || routes[0];
 
         // Update detail labels
         const nameEl = document.getElementById('detail-bus-name');
@@ -555,20 +557,10 @@ class SmartBusApp {
         }
 
         const routeCodeEl = document.getElementById('detail-route-code');
-        if (routeCodeEl) routeCodeEl.textContent = bus.routeName || 'Unassigned Line';
+        if (routeCodeEl) routeCodeEl.textContent = selectedRoute.name || 'Route 1: Anand Vihar - RKGIT Express';
 
-        // ETA panel values
-        const etaDestEl = document.getElementById('detail-eta-destination');
-        if (etaDestEl) etaDestEl.textContent = 'BUBT Main Campus (Mirpur 2)';
-
-        const etaDistEl = document.getElementById('detail-eta-distance');
-        if (etaDistEl) etaDistEl.textContent = bus.status === 'Active' ? '2.4 km' : '--';
-
-        const etaTimeEl = document.getElementById('detail-eta-time');
-        if (etaTimeEl) etaTimeEl.textContent = bus.status === 'Active' ? '~6 mins' : 'Standby';
-
-        const etaNextStopEl = document.getElementById('detail-eta-next-stop');
-        if (etaNextStopEl) etaNextStopEl.textContent = bus.status === 'Active' ? 'Sony Cinema Square' : 'Campus Hub Depot';
+        // Update telemetry data card
+        this.updateTelemetryCard(bus, selectedRoute);
 
         // Switch to bus-details tab
         this.switchStudentTab('bus-details');
@@ -584,6 +576,61 @@ class SmartBusApp {
                 this.updateInteractiveMap();
             }
         }, 120);
+    }
+
+    updateTelemetryCard(bus, route) {
+        if (!bus || !route) return;
+        const stops = route.stops;
+        const currentStop = stops[bus.currentStopIndex] || stops[0];
+
+        const etaDestEl = document.getElementById('detail-eta-destination');
+        if (etaDestEl) etaDestEl.textContent = 'RKGIT Main Campus (Delhi-Meerut Road)';
+
+        const etaDistEl = document.getElementById('detail-eta-distance');
+        if (etaDistEl) {
+            if (bus.status === 'Active') {
+                if (bus.currentStopIndex === 1) {
+                    etaDistEl.textContent = '~3.2 km';
+                } else if (bus.currentStopIndex === 2) {
+                    etaDistEl.textContent = '~2.4 km';
+                } else {
+                    const stopsRemaining = Math.max(1, stops.length - 1 - bus.currentStopIndex);
+                    etaDistEl.textContent = `~${(stopsRemaining * 1.5).toFixed(1)} km`;
+                }
+            } else {
+                etaDistEl.textContent = '--';
+            }
+        }
+
+        const etaTimeEl = document.getElementById('detail-eta-time');
+        if (etaTimeEl) {
+            if (bus.status === 'Active') {
+                if (bus.currentStopIndex === 1) {
+                    etaTimeEl.textContent = '~8 mins';
+                } else if (bus.currentStopIndex === 2) {
+                    etaTimeEl.textContent = '~6 mins';
+                } else {
+                    const stopsRemaining = Math.max(1, stops.length - 1 - bus.currentStopIndex);
+                    etaTimeEl.textContent = `~${stopsRemaining * 4} mins`;
+                }
+            } else {
+                etaTimeEl.textContent = 'Standby';
+            }
+        }
+
+        const etaNextStopEl = document.getElementById('detail-eta-next-stop');
+        if (etaNextStopEl) {
+            if (bus.status === 'Active') {
+                etaNextStopEl.textContent = currentStop.name;
+            } else {
+                etaNextStopEl.textContent = 'RKGIT Campus Depot';
+            }
+        }
+
+        const routeCodeEl = document.getElementById('detail-route-code');
+        if (routeCodeEl) {
+            routeCodeEl.textContent = route.name;
+        }
     }
 
     renderStudentRoutesTab() {
@@ -744,17 +791,18 @@ class SmartBusApp {
             return;
         }
 
-        // Initialize Leaflet Map centered at BUBT Campus (Mirpur 2, Dhaka)
+        // Initialize Leaflet Map centered at RKGIT Campus (5KM Stone, Delhi-Meerut Road, Ghaziabad)
         if (typeof L !== 'undefined') {
             this.map = L.map('live-map-container', {
                 zoomControl: true,
-                attributionControl: false
-            }).setView([23.8122, 90.3582], 14);
+                attributionControl: true
+            }).setView([28.6967, 77.4526], 13);
 
-            // Keyless OpenStreetMap tiles (100% free, zero watermarks)
+            // Keyless OpenStreetMap tiles (100% English labels, zero watermarks)
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
-                subdomains: ['a', 'b', 'c']
+                subdomains: ['a', 'b', 'c'],
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
             }).addTo(this.map);
 
             this.updateInteractiveMap();
@@ -788,7 +836,7 @@ class SmartBusApp {
 
         // Add Stop Markers
         stops.forEach((s, idx) => {
-            const isCampus = idx === 0;
+            const isCampus = idx === (stops.length - 1) || s.name.toLowerCase().includes('rkgit');
             const markerHtml = `
                 <div style="background:${isCampus ? '#10b981' : '#1e293b'}; color:#fff; border:2px solid ${isCampus ? '#34d399' : '#64748b'}; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; box-shadow:0 2px 8px rgba(0,0,0,0.5);">
                     ${idx + 1}
@@ -815,7 +863,7 @@ class SmartBusApp {
 
         // Add Active Bus Marker
         const buses = this.store.getBuses().filter(b => b.routeId === selectedRoute.id);
-        const activeBus = buses[0] || { currentStopIndex: 1, busNumber: 'BUS-01', speedKmh: 28, capacity: 45, currentOccupancy: 28 };
+        const activeBus = buses[0] || { currentStopIndex: 1, busNumber: 'UP-14-BT-101', speedKmh: 35, capacity: 50, currentOccupancy: 32 };
         const currentStop = stops[activeBus.currentStopIndex] || stops[0];
 
         const busIconHtml = `
@@ -844,6 +892,9 @@ class SmartBusApp {
 
         this.mapMarkers.push(busMarker);
         this.map.fitBounds(this.mapRouteLine.getBounds(), { padding: [40, 40] });
+
+        // Synchronize bottom telemetry card with active bus position
+        this.updateTelemetryCard(activeBus, selectedRoute);
     }
 
     startBusSimulation() {
@@ -865,7 +916,7 @@ class SmartBusApp {
 
             if (changed) {
                 this.store.saveBuses(buses);
-                // Update map & stops if student dashboard is visible
+                // Update map & stops & telemetry if student dashboard is visible
                 const studentView = document.getElementById('view-student');
                 if (studentView && studentView.style.display !== 'none') {
                     this.updateInteractiveMap();
@@ -1079,11 +1130,11 @@ class SmartBusApp {
     loginDemo(role) {
         let user;
         if (role === 'driver') {
-            user = { id: 'usr_demo_driver', name: 'Rafiqul Islam', email: 'driver@bubt.edu', role: 'driver' };
+            user = { id: 'usr_demo_driver', name: 'Rajesh Sharma', email: 'driver@rkgit.edu', role: 'driver' };
         } else if (role === 'admin') {
-            user = { id: 'usr_demo_admin', name: 'Sarah Jenkins', email: 'admin@bubt.edu', role: 'admin' };
+            user = { id: 'usr_demo_admin', name: 'Sarah Jenkins', email: 'admin@rkgit.edu', role: 'admin' };
         } else {
-            user = { id: 'usr_demo_student', name: 'Alex Chen', email: 'student@bubt.edu', role: 'student' };
+            user = { id: 'usr_demo_student', name: 'Alex Chen', email: 'student@rkgit.edu', role: 'student' };
         }
 
         this.store.setCurrentUser(user);
@@ -1134,7 +1185,7 @@ class SmartBusApp {
 
         this.store.setCurrentUser(user);
         this.closeAuthModal();
-        this.showToast(`Account created! Welcome to BUBT SmartBus, ${user.name}.`, 'success');
+        this.showToast(`Account created! Welcome to SmartBus, ${user.name}.`, 'success');
         this.navigate(`/dashboard/${user.role}`);
     }
 

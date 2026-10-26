@@ -58,14 +58,14 @@ document.addEventListener("DOMContentLoaded", () => {
 function initMapPicker() {
     if (pickerMap) {
         // Map already initialized, just reset view
-        pickerMap.setView([23.8122, 90.3582], 14);
+        pickerMap.setView([28.6967, 77.4526], 13);
         return;
     }
     
     const mapEl = document.getElementById('route-map-picker');
     if (!mapEl || typeof L === 'undefined') return;
     
-    pickerMap = L.map('route-map-picker').setView([23.8122, 90.3582], 14); // BUBT coordinates
+    pickerMap = L.map('route-map-picker').setView([28.6967, 77.4526], 13); // RKGIT Ghaziabad coordinates
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(pickerMap);
@@ -74,10 +74,10 @@ function initMapPicker() {
     if (L.Control.Geocoder) {
         L.Control.geocoder({
             defaultMarkGeocode: false, // Don't place a default marker
-            placeholder: "Search for a place (e.g., Mirpur 10)...",
+            placeholder: "Search for a place (e.g., Mohan Nagar, Raj Nagar)...",
             geocoder: L.Control.Geocoder.nominatim({
                 geocodingQueryParams: {
-                    countrycodes: 'bd' // Bias search to Bangladesh
+                    countrycodes: 'in' // Bias search to India
                 }
             })
         })

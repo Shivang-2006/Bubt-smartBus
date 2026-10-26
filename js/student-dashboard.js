@@ -490,7 +490,7 @@ window.openBusDetails = function(busId, updateHistory = true) {
     
     // Initialize map once
     if (!currentMap) {
-        currentMap = L.map('bus-map').setView([23.8122, 90.3582], 15); // BUBT Coordinates
+        currentMap = L.map('bus-map').setView([28.6967, 77.4526], 14); // RKGIT Ghaziabad Coordinates
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(currentMap);
@@ -502,7 +502,7 @@ window.openBusDetails = function(busId, updateHistory = true) {
             iconAnchor: [18, 18]
         });
         
-        currentBusMarker = L.marker([23.8122, 90.3582], {icon: busIcon}).addTo(currentMap);
+        currentBusMarker = L.marker([28.6967, 77.4526], {icon: busIcon}).addTo(currentMap);
         stopMarkersLayer = L.layerGroup().addTo(currentMap);
     }
     

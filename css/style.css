@@ -2626,6 +2626,12 @@ button {
     filter: none;
 }
 
+/* Smooth Bus Marker Animation */
+.custom-bus-icon {
+    transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+}
+
 /* ── Stop Progress Checklist ── */
 .stop-progress-list {
     position: relative;
