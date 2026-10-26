@@ -2632,6 +2632,111 @@ button {
     will-change: transform;
 }
 
+/* ── Floating Map Controls & Real-Time Feed Badges ── */
+.map-controls-floating {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.map-feed-badge {
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.feed-simulated {
+    background: rgba(30, 41, 59, 0.85);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.feed-simulated .badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fbbf24;
+    box-shadow: 0 0 8px #fbbf24;
+}
+
+.feed-live {
+    background: rgba(6, 78, 59, 0.85);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.6);
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
+}
+
+.feed-live .badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 10px #10b981;
+    animation: liveDotPulse 1.4s infinite;
+}
+
+@keyframes liveDotPulse {
+    0% { transform: scale(0.85); opacity: 0.7; }
+    50% { transform: scale(1.35); opacity: 1; }
+    100% { transform: scale(0.85); opacity: 0.7; }
+}
+
+.btn-recenter-map {
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(15, 23, 42, 0.85);
+    color: #f1f5f9;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    padding: 7px 14px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s ease;
+}
+
+.btn-recenter-map:hover {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: var(--accent-primary);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+.btn-recenter-map:active {
+    transform: translateY(0);
+}
+
+.pulse-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 10px #10b981;
+    animation: liveDotPulse 1.4s infinite;
+}
+
 /* ── Stop Progress Checklist ── */
 .stop-progress-list {
     position: relative;

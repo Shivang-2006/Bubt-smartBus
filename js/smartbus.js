@@ -220,13 +220,26 @@ class SmartBusApp {
         this.map = null;
         this.mapMarkers = [];
         this.mapRouteLine = null;
+        this.activeBusMarker = null;
+        this.markerAnimFrame = null;
         this.busSimulationTimer = null;
-        this.driverActiveTrip = null;
+        this.driverActiveTrip = false;
+        this.driverWatchId = null;
+        this.driverFallbackTimer = null;
+        this.lastDriverBroadcastTime = 0;
+        this.telemetryChannel = null;
+        this.feedMode = 'SIMULATED';
+        this.lastLiveTelemetryTime = 0;
+        this.currentSimulationWaypointIndex = 0;
+        this.simulatedWaypoints = [];
+        this.activeBusCurrentCoords = [28.6788, 77.3828]; // Mohan Nagar default
 
         this.init();
     }
 
     init() {
+        this.initTelemetrySync();
+        this.prepareSimulationWaypoints();
         this.bindEvents();
         this.handleRoute();
         window.addEventListener('popstate', () => this.handleRoute());
@@ -539,6 +552,7 @@ class SmartBusApp {
         if (!bus) return;
 
         this.currentRouteId = bus.routeId || 'route_1';
+        this.prepareSimulationWaypoints();
         const routes = this.store.getRoutes();
         const selectedRoute = routes.find(r => r.id === this.currentRouteId) || routes[0];
 
@@ -559,21 +573,21 @@ class SmartBusApp {
         const routeCodeEl = document.getElementById('detail-route-code');
         if (routeCodeEl) routeCodeEl.textContent = selectedRoute.name || 'Route 1: Anand Vihar - RKGIT Express';
 
-        // Update telemetry data card
-        this.updateTelemetryCard(bus, selectedRoute);
+        // Update feed badge
+        this.updateFeedModeBadge(this.feedMode);
 
         // Switch to bus-details tab
         this.switchStudentTab('bus-details');
 
         // Render stop timeline
-        this.renderStopsTimeline();
+        this.renderStopsTimeline(bus.currentStopIndex || 1);
 
         // Update map
         setTimeout(() => {
             this.initInteractiveMap();
             if (this.map) {
                 this.map.invalidateSize();
-                this.updateInteractiveMap();
+                this.updateInteractiveMap(true);
             }
         }, 120);
     }
@@ -744,25 +758,25 @@ class SmartBusApp {
         this.renderAdminRoutesSummary();
     }
 
-    renderStopsTimeline() {
+    renderStopsTimeline(activeStopIndex = 1) {
         const timelineEl = document.getElementById('student-stops-timeline');
         if (!timelineEl) return;
 
         const routes = this.store.getRoutes();
         const selectedRoute = routes.find(r => r.id === this.currentRouteId) || routes[0];
         const buses = this.store.getBuses().filter(b => b.routeId === selectedRoute.id);
-        const activeBus = buses[0] || { currentStopIndex: 1 };
+        const activeBus = buses[0] || { busNumber: 'UP-14-BT-101' };
 
         timelineEl.innerHTML = `
-            <div style="margin-bottom:0.75rem; font-weight:700; font-size:0.9rem; color:var(--text-primary); display:flex; justify-content:space-between;">
+            <div style="margin-bottom:0.75rem; font-weight:700; font-size:0.9rem; color:var(--text-primary); display:flex; justify-content:space-between; align-items:center;">
                 <span>Stops on ${selectedRoute.code}</span>
-                <span style="color:var(--accent-primary);">Active Bus: ${activeBus.busNumber || 'BUS-01'}</span>
+                <span style="color:var(--accent-primary); font-size:0.8rem;">Bus: ${activeBus.busNumber}</span>
             </div>
             <div class="stop-progress-list">
                 ${selectedRoute.stops.map((stop, idx) => {
                     let stepClass = 'is-upcoming';
-                    if (idx < activeBus.currentStopIndex) stepClass = 'is-passed';
-                    else if (idx === activeBus.currentStopIndex) stepClass = 'is-current';
+                    if (idx < activeStopIndex) stepClass = 'is-passed';
+                    else if (idx === activeStopIndex) stepClass = 'is-current';
 
                     return `
                         <div class="stop-step ${stepClass}">
@@ -770,7 +784,7 @@ class SmartBusApp {
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <strong style="font-size:0.875rem; color:var(--text-primary);">${stop.name}</strong>
                                 <span style="font-size:0.78rem; font-weight:600; color:${stepClass === 'is-current' ? 'var(--accent-primary)' : 'var(--text-muted)'};">
-                                    ${stepClass === 'is-current' ? 'Approaching Now' : stop.eta}
+                                    ${stepClass === 'is-current' ? 'Approaching Now' : (stepClass === 'is-passed' ? 'Departed' : stop.eta)}
                                 </span>
                             </div>
                         </div>
@@ -780,7 +794,169 @@ class SmartBusApp {
         `;
     }
 
-    // ── Interactive Map Simulation (Leaflet.js) ──
+    highlightActiveStopInTimeline(activeStopIndex) {
+        const timelineList = document.querySelectorAll('.stop-progress-list .stop-step');
+        if (!timelineList || timelineList.length === 0) return;
+
+        timelineList.forEach((stepEl, idx) => {
+            stepEl.classList.remove('is-passed', 'is-current', 'is-upcoming');
+            const etaSpan = stepEl.querySelector('span');
+
+            if (idx < activeStopIndex) {
+                stepEl.classList.add('is-passed');
+                if (etaSpan) {
+                    etaSpan.textContent = 'Departed';
+                    etaSpan.style.color = 'var(--text-muted)';
+                }
+            } else if (idx === activeStopIndex) {
+                stepEl.classList.add('is-current');
+                if (etaSpan) {
+                    etaSpan.textContent = 'Approaching Now';
+                    etaSpan.style.color = 'var(--accent-primary)';
+                }
+            } else {
+                stepEl.classList.add('is-upcoming');
+                if (etaSpan) etaSpan.style.color = 'var(--text-muted)';
+            }
+        });
+    }
+
+    // ── Haversine Distance & Math Engine ──
+    calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Earth radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    prepareSimulationWaypoints() {
+        const routes = this.store.getRoutes();
+        const selectedRoute = routes.find(r => r.id === this.currentRouteId) || routes[0];
+        const stops = selectedRoute.stops;
+
+        this.simulatedWaypoints = [];
+        const pointsPerSegment = 10;
+
+        for (let i = 0; i < stops.length - 1; i++) {
+            const start = stops[i];
+            const end = stops[i + 1];
+            for (let j = 0; j < pointsPerSegment; j++) {
+                const frac = j / pointsPerSegment;
+                const lat = start.lat + (end.lat - start.lat) * frac;
+                const lng = start.lng + (end.lng - start.lng) * frac;
+                this.simulatedWaypoints.push({
+                    lat: lat,
+                    lng: lng,
+                    fromStopIndex: i,
+                    nextStopIndex: i + 1,
+                    speedKmh: Math.floor(28 + Math.sin(j * 0.8) * 8)
+                });
+            }
+        }
+
+        // Add campus final stop with 3 extra pause ticks
+        const finalStop = stops[stops.length - 1];
+        for (let p = 0; p < 3; p++) {
+            this.simulatedWaypoints.push({
+                lat: finalStop.lat,
+                lng: finalStop.lng,
+                fromStopIndex: stops.length - 2,
+                nextStopIndex: stops.length - 1,
+                speedKmh: 0,
+                isDepot: true
+            });
+        }
+    }
+
+    // ── Telemetry Channel & Real-Time Sync ──
+    initTelemetrySync() {
+        if (typeof BroadcastChannel !== 'undefined') {
+            try {
+                this.telemetryChannel = new BroadcastChannel('smartbus_telemetry_channel');
+                this.telemetryChannel.onmessage = (event) => {
+                    this.onTelemetryReceived(event.data);
+                };
+            } catch (e) {
+                console.warn('BroadcastChannel error:', e);
+            }
+        }
+
+        // Cross-tab sync via localStorage 'storage' event
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'smartbus_live_telemetry' && e.newValue) {
+                try {
+                    const data = JSON.parse(e.newValue);
+                    this.onTelemetryReceived(data);
+                } catch (err) {}
+            }
+        });
+
+        // Initial check for existing active telemetry in localStorage
+        try {
+            const saved = localStorage.getItem('smartbus_live_telemetry');
+            if (saved) {
+                const data = JSON.parse(saved);
+                if (data && data.isLive && Date.now() - data.timestamp < 15000) {
+                    this.onTelemetryReceived(data);
+                }
+            }
+        } catch (err) {}
+    }
+
+    broadcastTelemetry(payload) {
+        if (this.telemetryChannel) {
+            try {
+                this.telemetryChannel.postMessage(payload);
+            } catch (e) {}
+        }
+        try {
+            localStorage.setItem('smartbus_live_telemetry', JSON.stringify(payload));
+        } catch (e) {}
+
+        // Also deliver locally to self in case student view is in same window
+        this.onTelemetryReceived(payload);
+    }
+
+    onTelemetryReceived(data) {
+        if (!data) return;
+
+        if (data.isLive && Date.now() - data.timestamp < 15000) {
+            // Live broadcast active from driver!
+            this.feedMode = 'LIVE';
+            this.lastLiveTelemetryTime = data.timestamp || Date.now();
+            this.updateFeedModeBadge('LIVE');
+
+            // Update bus position smoothly
+            this.updateBusLocationOnMap([data.lat, data.lng], data.speedKmh || 32, true);
+        } else if (!data.isLive) {
+            // Driver ended trip
+            if (this.feedMode === 'LIVE') {
+                this.feedMode = 'SIMULATED';
+                this.updateFeedModeBadge('SIMULATED');
+            }
+        }
+    }
+
+    updateFeedModeBadge(mode) {
+        const badgeEl = document.getElementById('map-feed-mode-badge');
+        const textEl = document.getElementById('feed-mode-text');
+        if (!badgeEl || !textEl) return;
+
+        if (mode === 'LIVE') {
+            badgeEl.className = 'map-feed-badge feed-live';
+            textEl.textContent = '🟢 Live GPS Feed';
+        } else {
+            badgeEl.className = 'map-feed-badge feed-simulated';
+            textEl.textContent = '🟡 Simulated Telemetry';
+        }
+    }
+
+    // ── Interactive Leaflet Map & Smooth Consumer ──
     initInteractiveMap() {
         const mapContainer = document.getElementById('live-map-container');
         if (!mapContainer) return;
@@ -805,14 +981,14 @@ class SmartBusApp {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
             }).addTo(this.map);
 
-            this.updateInteractiveMap();
+            this.updateInteractiveMap(true);
         }
     }
 
-    updateInteractiveMap() {
+    updateInteractiveMap(fitBounds = false) {
         if (!this.map || typeof L === 'undefined') return;
 
-        // Clear existing markers & polyline
+        // Clear existing static markers & polyline
         this.mapMarkers.forEach(m => this.map.removeLayer(m));
         this.mapMarkers = [];
         if (this.mapRouteLine) {
@@ -861,69 +1037,205 @@ class SmartBusApp {
             this.mapMarkers.push(marker);
         });
 
-        // Add Active Bus Marker
-        const buses = this.store.getBuses().filter(b => b.routeId === selectedRoute.id);
-        const activeBus = buses[0] || { currentStopIndex: 1, busNumber: 'UP-14-BT-101', speedKmh: 35, capacity: 50, currentOccupancy: 32 };
-        const currentStop = stops[activeBus.currentStopIndex] || stops[0];
+        if (fitBounds && this.mapRouteLine) {
+            this.map.fitBounds(this.mapRouteLine.getBounds(), { padding: [40, 40] });
+        }
 
-        const busIconHtml = `
-            <div style="background:#3b82f6; color:#fff; width:40px; height:40px; border-radius:50%; border:3px solid #fff; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 0 20px rgba(59,130,246,0.8); animation:pulse 1.8s infinite;">
-                🚌
-            </div>
-        `;
-        const busIcon = L.divIcon({
-            html: busIconHtml,
-            className: 'custom-bus-icon',
-            iconSize: [40, 40],
-            iconAnchor: [20, 20]
-        });
+        // Add or re-position active bus marker
+        const initialCoords = this.activeBusCurrentCoords || [stops[0].lat, stops[0].lng];
+        this.updateBusLocationOnMap(initialCoords, 32, this.feedMode === 'LIVE');
+    }
 
-        const busMarker = L.marker([currentStop.lat, currentStop.lng], { icon: busIcon })
-            .addTo(this.map)
-            .bindPopup(`
-                <div style="font-family:sans-serif; padding:6px; min-width:140px;">
-                    <div style="font-size:13px; font-weight:800; color:#1e293b;">${activeBus.busNumber}</div>
-                    <div style="font-size:11px; color:#10b981; font-weight:700;">🟢 Live Broadcasting</div>
-                    <div style="font-size:11px; color:#475569; margin-top:4px;">Approaching: <strong>${currentStop.name}</strong></div>
-                    <div style="font-size:11px; color:#475569;">Occupancy: <strong>${activeBus.currentOccupancy}/${activeBus.capacity} seats</strong></div>
-                    <div style="font-size:11px; color:#475569;">Speed: <strong>${activeBus.speedKmh} km/h</strong></div>
+    updateBusLocationOnMap(coords, speedKmh = 30, isLive = false, overrideNextStopIndex = null) {
+        if (!coords || !coords[0] || !coords[1]) return;
+        this.activeBusCurrentCoords = coords;
+
+        const routes = this.store.getRoutes();
+        const selectedRoute = routes.find(r => r.id === this.currentRouteId) || routes[0];
+        const stops = selectedRoute.stops;
+
+        // Animate marker on Leaflet map if map is rendered
+        if (this.map && typeof L !== 'undefined') {
+            if (!this.activeBusMarker) {
+                const busIconHtml = `
+                    <div style="background:#3b82f6; color:#fff; width:40px; height:40px; border-radius:50%; border:3px solid #fff; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 0 20px rgba(59,130,246,0.8); animation:pulse 1.8s infinite;">
+                        🚌
+                    </div>
+                `;
+                const busIcon = L.divIcon({
+                    html: busIconHtml,
+                    className: 'custom-bus-icon',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20]
+                });
+                this.activeBusMarker = L.marker([coords[0], coords[1]], { icon: busIcon }).addTo(this.map);
+            } else {
+                this.animateMarkerTo(coords, 1800);
+            }
+        }
+
+        // Calculate Next Approaching Stop & Distances
+        let nextStopIndex = overrideNextStopIndex;
+        if (nextStopIndex == null) {
+            let minDistance = Infinity;
+            let closestIdx = 0;
+            for (let i = 0; i < stops.length; i++) {
+                const d = this.calculateHaversineDistance(coords[0], coords[1], stops[i].lat, stops[i].lng);
+                if (d < minDistance) {
+                    minDistance = d;
+                    closestIdx = i;
+                }
+            }
+            if (minDistance < 0.15 && closestIdx < stops.length - 1) {
+                nextStopIndex = closestIdx + 1;
+            } else {
+                nextStopIndex = closestIdx;
+            }
+        }
+
+        const currentTargetStop = stops[nextStopIndex] || stops[stops.length - 1];
+
+        // Haversine distance to next stop
+        const distanceToNextKm = this.calculateHaversineDistance(coords[0], coords[1], currentTargetStop.lat, currentTargetStop.lng);
+
+        // Sum distance along remaining route path to RKGIT Campus Gate
+        let distanceToCampusKm = distanceToNextKm;
+        for (let k = nextStopIndex; k < stops.length - 1; k++) {
+            distanceToCampusKm += this.calculateHaversineDistance(stops[k].lat, stops[k].lng, stops[k + 1].lat, stops[k + 1].lng);
+        }
+
+        // Dynamic ETA calculation
+        const effectiveSpeed = speedKmh > 8 ? speedKmh : 25;
+        const etaMinutes = Math.max(1, Math.round((distanceToCampusKm / effectiveSpeed) * 60));
+
+        // Update telemetry card
+        const destEl = document.getElementById('detail-eta-destination');
+        if (destEl) destEl.textContent = 'RKGIT Main Campus (Delhi-Meerut Road)';
+
+        const distEl = document.getElementById('detail-eta-distance');
+        if (distEl) {
+            distEl.textContent = distanceToCampusKm < 0.2 ? '0.1 km (At Gate)' : `~${distanceToCampusKm.toFixed(1)} km`;
+        }
+
+        const timeEl = document.getElementById('detail-eta-time');
+        if (timeEl) {
+            timeEl.textContent = distanceToCampusKm < 0.2 ? 'Arrived' : `~${etaMinutes} mins`;
+        }
+
+        const nextStopEl = document.getElementById('detail-eta-next-stop');
+        if (nextStopEl) {
+            nextStopEl.textContent = distanceToNextKm < 0.15 ? `At ${currentTargetStop.name}` : currentTargetStop.name;
+        }
+
+        const routeCodeEl = document.getElementById('detail-route-code');
+        if (routeCodeEl) routeCodeEl.textContent = selectedRoute.name;
+
+        // Update popup on bus marker
+        if (this.activeBusMarker) {
+            this.activeBusMarker.bindPopup(`
+                <div style="font-family:sans-serif; padding:6px; min-width:150px;">
+                    <div style="font-size:13px; font-weight:800; color:#1e293b;">UP-14-BT-101</div>
+                    <div style="font-size:11px; color:${isLive ? '#10b981' : '#f59e0b'}; font-weight:700;">
+                        ${isLive ? '🟢 Live GPS Feed' : '🟡 Simulated Telemetry'}
+                    </div>
+                    <div style="font-size:11px; color:#475569; margin-top:4px;">Approaching: <strong>${currentTargetStop.name}</strong></div>
+                    <div style="font-size:11px; color:#475569;">Speed: <strong>${speedKmh} km/h</strong></div>
+                    <div style="font-size:11px; color:#475569;">Distance to Campus: <strong>${distanceToCampusKm.toFixed(1)} km</strong></div>
                 </div>
             `);
+        }
 
-        this.mapMarkers.push(busMarker);
-        this.map.fitBounds(this.mapRouteLine.getBounds(), { padding: [40, 40] });
+        // Highlight active stop in the progress timeline
+        this.highlightActiveStopInTimeline(nextStopIndex);
+    }
 
-        // Synchronize bottom telemetry card with active bus position
-        this.updateTelemetryCard(activeBus, selectedRoute);
+    animateMarkerTo(targetCoords, durationMs = 1800) {
+        if (!this.activeBusMarker) return;
+        if (this.markerAnimFrame) {
+            cancelAnimationFrame(this.markerAnimFrame);
+            this.markerAnimFrame = null;
+        }
+
+        const startLatLng = this.activeBusMarker.getLatLng();
+        const startLat = startLatLng.lat;
+        const startLng = startLatLng.lng;
+        const targetLat = targetCoords[0];
+        const targetLng = targetCoords[1];
+
+        // If delta is negligible, snap and return
+        if (Math.abs(startLat - targetLat) < 0.000005 && Math.abs(startLng - targetLng) < 0.000005) {
+            this.activeBusMarker.setLatLng([targetLat, targetLng]);
+            return;
+        }
+
+        const startTime = performance.now();
+
+        const step = (now) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / durationMs, 1);
+
+            // Smooth easeInOutQuad
+            const ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+            const curLat = startLat + (targetLat - startLat) * ease;
+            const curLng = startLng + (targetLng - startLng) * ease;
+
+            this.activeBusMarker.setLatLng([curLat, curLng]);
+
+            if (progress < 1) {
+                this.markerAnimFrame = requestAnimationFrame(step);
+            } else {
+                this.markerAnimFrame = null;
+            }
+        };
+
+        this.markerAnimFrame = requestAnimationFrame(step);
+    }
+
+    recenterOnBus() {
+        if (!this.map) return;
+        if (this.activeBusMarker) {
+            const pos = this.activeBusMarker.getLatLng();
+            this.map.panTo(pos, { animate: true, duration: 0.8 });
+            this.showToast('Centered map on active bus', 'info');
+        } else if (this.activeBusCurrentCoords) {
+            this.map.panTo(this.activeBusCurrentCoords, { animate: true, duration: 0.8 });
+        }
     }
 
     startBusSimulation() {
         if (this.busSimulationTimer) clearInterval(this.busSimulationTimer);
-        
+
+        // Advance simulation every 2000ms if no live GPS feed
         this.busSimulationTimer = setInterval(() => {
-            const buses = this.store.getBuses();
-            let changed = false;
+            const now = Date.now();
+            const hasRecentLiveFeed = (this.feedMode === 'LIVE' && (now - this.lastLiveTelemetryTime < 12000));
 
-            buses.forEach(b => {
-                if (b.status === 'Active') {
-                    const route = this.store.getRoutes().find(r => r.id === b.routeId);
-                    if (route && route.stops.length > 0) {
-                        b.currentStopIndex = (b.currentStopIndex + 1) % route.stops.length;
-                        changed = true;
-                    }
-                }
-            });
-
-            if (changed) {
-                this.store.saveBuses(buses);
-                // Update map & stops & telemetry if student dashboard is visible
-                const studentView = document.getElementById('view-student');
-                if (studentView && studentView.style.display !== 'none') {
-                    this.updateInteractiveMap();
-                    this.renderStopsTimeline();
-                }
+            if (hasRecentLiveFeed) {
+                // Live broadcast is active from driver! Simulation does not advance marker.
+                return;
             }
-        }, 8000); // Progress stop every 8 seconds in simulation
+
+            // Switch back to simulation mode
+            if (this.feedMode !== 'SIMULATED') {
+                this.feedMode = 'SIMULATED';
+                this.updateFeedModeBadge('SIMULATED');
+            }
+
+            if (!this.simulatedWaypoints || this.simulatedWaypoints.length === 0) {
+                this.prepareSimulationWaypoints();
+            }
+
+            // Advance waypoint index
+            this.currentSimulationWaypointIndex = (this.currentSimulationWaypointIndex + 1) % this.simulatedWaypoints.length;
+            const wp = this.simulatedWaypoints[this.currentSimulationWaypointIndex];
+
+            // Only update UI if student dashboard or details tab is visible
+            const studentView = document.getElementById('view-student');
+            if (studentView && studentView.style.display !== 'none') {
+                this.updateBusLocationOnMap([wp.lat, wp.lng], wp.speedKmh, false, wp.nextStopIndex);
+            }
+        }, 2000);
     }
 
     // ── Rider Notice Board / Chat ──
@@ -967,7 +1279,7 @@ class SmartBusApp {
         this.renderRiderChat();
     }
 
-    // ── Driver Trip Controller ──
+    // ── Driver Trip Controller & Geolocation Broadcaster ──
     renderDriverController() {
         const busNumEl = document.getElementById('driver-assigned-bus-number');
         const plateEl = document.getElementById('driver-assigned-plate');
@@ -975,6 +1287,8 @@ class SmartBusApp {
         const passCountEl = document.getElementById('driver-passenger-count');
         const stopNameEl = document.getElementById('driver-current-stop-name');
         const statusBadgeEl = document.getElementById('driver-trip-status-badge');
+        const gpsPillEl = document.getElementById('driver-gps-pill');
+        const startBtn = document.getElementById('btn-driver-start');
 
         const buses = this.store.getBuses();
         const assignedBus = buses[0]; // Primary driver bus
@@ -995,19 +1309,169 @@ class SmartBusApp {
         if (stopNameEl) stopNameEl.textContent = currentStop.name;
 
         if (statusBadgeEl) {
-            statusBadgeEl.textContent = assignedBus.status === 'Active' ? 'TRIP IN PROGRESS' : 'STANDBY';
-            statusBadgeEl.className = `badge-status ${assignedBus.status === 'Active' ? 'badge-status--active' : 'badge-status--idle'}`;
+            statusBadgeEl.textContent = this.driverActiveTrip ? 'TRIP IN PROGRESS' : 'STANDBY';
+            statusBadgeEl.className = `badge-status ${this.driverActiveTrip ? 'badge-status--active' : 'badge-status--idle'}`;
+        }
+
+        if (gpsPillEl) {
+            if (this.driverActiveTrip) {
+                gpsPillEl.className = 'badge-status badge-status--active';
+                gpsPillEl.style.display = 'inline-flex';
+                gpsPillEl.style.alignItems = 'center';
+                gpsPillEl.style.gap = '6px';
+                gpsPillEl.style.background = 'rgba(16,185,129,0.2)';
+                gpsPillEl.style.color = '#10b981';
+                gpsPillEl.style.border = '1px solid #10b981';
+                gpsPillEl.innerHTML = '<span class="pulse-dot"></span> 📡 Transmitting GPS';
+            } else {
+                gpsPillEl.className = 'badge-status badge-status--idle';
+                gpsPillEl.style.display = 'inline-block';
+                gpsPillEl.style.background = '';
+                gpsPillEl.style.color = '';
+                gpsPillEl.style.border = '';
+                gpsPillEl.textContent = '⚪ GPS Standby';
+            }
+        }
+
+        if (startBtn) {
+            if (this.driverActiveTrip) {
+                startBtn.innerHTML = '<span>⏸</span> Stop / Pause Live Location';
+                startBtn.classList.add('is-active');
+            } else {
+                startBtn.innerHTML = '<span>▶</span> Start Trip / Share Live Location';
+                startBtn.classList.remove('is-active');
+            }
         }
     }
 
     driverStartTrip() {
+        if (this.driverActiveTrip) {
+            this.driverCompleteTrip();
+            return;
+        }
+
         const buses = this.store.getBuses();
         const bus = buses[0];
         bus.status = 'Active';
-        bus.speedKmh = 32;
         this.store.saveBuses(buses);
-        this.showToast('Trip started! Live GPS telemetry is broadcasting to campus.', 'success');
+
+        this.driverActiveTrip = true;
+        this.showToast('Trip started! Broadcasting real-time GPS coordinates.', 'success');
         this.renderDriverController();
+
+        this.startDriverGeolocation(bus);
+    }
+
+    startDriverGeolocation(bus) {
+        if (this.driverWatchId != null) {
+            navigator.geolocation.clearWatch(this.driverWatchId);
+            this.driverWatchId = null;
+        }
+
+        if ('geolocation' in navigator) {
+            this.lastDriverBroadcastTime = 0;
+            this.driverWatchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    const now = Date.now();
+                    if (now - this.lastDriverBroadcastTime < 2000) return;
+                    this.lastDriverBroadcastTime = now;
+
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    const speedKmh = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 32;
+                    const heading = pos.coords.heading || 0;
+                    const accuracy = Math.round(pos.coords.accuracy || 8);
+
+                    const payload = {
+                        busId: bus.id,
+                        busNumber: bus.busNumber,
+                        routeId: bus.routeId || this.currentRouteId,
+                        lat: lat,
+                        lng: lng,
+                        speedKmh: speedKmh,
+                        heading: heading,
+                        accuracy: accuracy,
+                        isLive: true,
+                        timestamp: now
+                    };
+
+                    this.broadcastTelemetry(payload);
+
+                    const displayEl = document.getElementById('driver-gps-coords-display');
+                    if (displayEl) {
+                        displayEl.textContent = `📡 Live GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)} • Speed: ${speedKmh} km/h • Acc: ±${accuracy}m`;
+                    }
+                },
+                (err) => {
+                    console.warn('Geolocation watchPosition notice:', err);
+                    this.showToast(`GPS Notice: ${err.message}. Activating simulated route broadcaster.`, 'warning');
+                    this.startDriverFallbackBroadcaster(bus);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                }
+            );
+        } else {
+            this.showToast('Geolocation not supported on this device. Using route simulation broadcaster.', 'warning');
+            this.startDriverFallbackBroadcaster(bus);
+        }
+    }
+
+    startDriverFallbackBroadcaster(bus) {
+        if (this.driverFallbackTimer != null) clearInterval(this.driverFallbackTimer);
+
+        const routes = this.store.getRoutes();
+        const route = routes.find(r => r.id === (bus.routeId || this.currentRouteId)) || routes[0];
+        let waypointIdx = 0;
+
+        // Generate fine-grained waypoints along route
+        const waypoints = [];
+        for (let i = 0; i < route.stops.length - 1; i++) {
+            const from = route.stops[i];
+            const to = route.stops[i + 1];
+            for (let j = 0; j < 10; j++) {
+                const frac = j / 10;
+                waypoints.push({
+                    lat: from.lat + (to.lat - from.lat) * frac,
+                    lng: from.lng + (to.lng - from.lng) * frac,
+                    nextStop: to.name,
+                    speed: 30 + Math.floor(Math.sin(j) * 5)
+                });
+            }
+        }
+
+        this.driverFallbackTimer = setInterval(() => {
+            if (!this.driverActiveTrip) {
+                clearInterval(this.driverFallbackTimer);
+                return;
+            }
+
+            waypointIdx = (waypointIdx + 1) % waypoints.length;
+            const wp = waypoints[waypointIdx];
+            const now = Date.now();
+
+            const payload = {
+                busId: bus.id,
+                busNumber: bus.busNumber,
+                routeId: route.id,
+                lat: wp.lat,
+                lng: wp.lng,
+                speedKmh: wp.speed,
+                heading: 45,
+                accuracy: 5,
+                isLive: true,
+                timestamp: now
+            };
+
+            this.broadcastTelemetry(payload);
+
+            const displayEl = document.getElementById('driver-gps-coords-display');
+            if (displayEl) {
+                displayEl.textContent = `📡 Broadcasting: ${wp.lat.toFixed(5)}, ${wp.lng.toFixed(5)} • Speed: ${wp.speed} km/h • Next: ${wp.nextStop}`;
+            }
+        }, 2500);
     }
 
     driverNextStop() {
@@ -1017,7 +1481,6 @@ class SmartBusApp {
         const route = routes.find(r => r.id === bus.routeId) || routes[0];
 
         bus.currentStopIndex = (bus.currentStopIndex + 1) % route.stops.length;
-        // Random passenger boarding / deboarding
         const delta = Math.floor(Math.random() * 7) - 3;
         bus.currentOccupancy = Math.max(0, Math.min(bus.capacity, bus.currentOccupancy + delta));
         
@@ -1028,13 +1491,40 @@ class SmartBusApp {
     }
 
     driverCompleteTrip() {
+        this.driverActiveTrip = false;
+
+        if (this.driverWatchId != null) {
+            navigator.geolocation.clearWatch(this.driverWatchId);
+            this.driverWatchId = null;
+        }
+
+        if (this.driverFallbackTimer != null) {
+            clearInterval(this.driverFallbackTimer);
+            this.driverFallbackTimer = null;
+        }
+
         const buses = this.store.getBuses();
         const bus = buses[0];
         bus.status = 'Idle';
         bus.speedKmh = 0;
-        bus.currentOccupancy = 0;
         this.store.saveBuses(buses);
-        this.showToast('Trip completed. Bus status updated to Idle.', 'success');
+
+        // Notify subscribers that live broadcast ended
+        this.broadcastTelemetry({
+            busId: bus.id,
+            isLive: false,
+            timestamp: Date.now()
+        });
+        try {
+            localStorage.removeItem('smartbus_live_telemetry');
+        } catch (e) {}
+
+        const displayEl = document.getElementById('driver-gps-coords-display');
+        if (displayEl) {
+            displayEl.textContent = 'GPS Broadcast: Inactive • Click "Start Trip / Share Live Location" to transmit';
+        }
+
+        this.showToast('Trip completed. Live GPS transmission stopped.', 'info');
         this.renderDriverController();
     }
 
@@ -1423,6 +1913,9 @@ class SmartBusApp {
         document.getElementById('rider-chat-input')?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') this.sendRiderChatMessage();
         });
+
+        // Recenter Map on Bus Action
+        document.getElementById('btn-recenter-bus')?.addEventListener('click', () => this.recenterOnBus());
 
         // Driver Actions
         document.getElementById('btn-driver-start')?.addEventListener('click', () => this.driverStartTrip());

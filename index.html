@@ -357,6 +357,17 @@
                         <!-- Leaflet Live Map -->
                         <div class="map-container" id="student-live-map-wrap" style="height:420px; border-radius:14px; border:1px solid var(--border-card); overflow:hidden; position:relative; margin-bottom:1.5rem; background:#0f172a;">
                             <div id="live-map-container" style="width:100%; height:100%;"></div>
+                            
+                            <!-- Floating Telemetry Feed Badge & Recenter Control -->
+                            <div class="map-controls-floating">
+                                <div id="map-feed-mode-badge" class="map-feed-badge feed-simulated">
+                                    <span class="badge-dot"></span>
+                                    <span id="feed-mode-text">🟡 Simulated Telemetry</span>
+                                </div>
+                                <button id="btn-recenter-bus" class="btn-recenter-map" type="button" title="Recenter Map on Active Bus">
+                                    <span>🎯</span> Recenter on Bus
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Live ETA Telemetry Panel -->
@@ -627,17 +638,22 @@
                     </div>
 
                     <div style="background:rgba(15, 23, 42, 0.75); border:1px solid var(--border-card); border-radius:12px; padding:1.25rem; margin-bottom:1.5rem;">
-                        <span style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Next Target Stop</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                            <span style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Next Target Stop</span>
+                            <div id="driver-gps-pill" class="badge-status badge-status--idle">⚪ GPS Standby</div>
+                        </div>
                         <div id="driver-current-stop-name" style="font-size:1.35rem; font-weight:800; color:#3b82f6; margin-top:4px;">
                             Mohan Nagar Metro Station
                         </div>
-                        <div style="font-size:0.8rem; color:#10b981; margin-top:4px;">🟢 Broadcasting GPS Location (5s Interval)</div>
+                        <div id="driver-gps-coords-display" style="font-size:0.8rem; color:var(--text-muted); margin-top:6px; font-family:monospace;">
+                            GPS Broadcast: Inactive &bull; Click "Start Trip / Share Live Location" to transmit
+                        </div>
                     </div>
 
                     <!-- Action Controls -->
                     <div class="driver-actions-row">
                         <button id="btn-driver-start" class="btn-trip-action btn-trip-start">
-                            <span>▶</span> Start Trip
+                            <span>▶</span> Start Trip / Share Live Location
                         </button>
                         <button id="btn-driver-next" class="btn-trip-action btn-trip-next">
                             <span>⏩</span> Next Stop
