@@ -358,15 +358,26 @@
                         <div class="map-container" id="student-live-map-wrap" style="height:420px; border-radius:14px; border:1px solid var(--border-card); overflow:hidden; position:relative; margin-bottom:1.5rem; background:#0f172a;">
                             <div id="live-map-container" style="width:100%; height:100%;"></div>
                             
-                            <!-- Floating Telemetry Feed Badge & Recenter Control -->
+                            <!-- Floating Telemetry Feed Badge, Auto-Follow, and Recenter Controls -->
                             <div class="map-controls-floating">
-                                <div id="map-feed-mode-badge" class="map-feed-badge feed-simulated">
-                                    <span class="badge-dot"></span>
-                                    <span id="feed-mode-text">🟡 Simulated Telemetry</span>
+                                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                    <div id="map-feed-mode-badge" class="map-feed-badge feed-simulated">
+                                        <span class="badge-dot"></span>
+                                        <span id="feed-mode-text">🟡 Simulated Telemetry</span>
+                                    </div>
+                                    <button id="btn-toggle-sim" class="btn-toggle-sim" type="button" style="display:none;" title="Enable Simulated Movement">
+                                        <span>🎮</span> Enable Simulated Movement
+                                    </button>
                                 </div>
-                                <button id="btn-recenter-bus" class="btn-recenter-map" type="button" title="Recenter Map on Active Bus">
-                                    <span>🎯</span> Recenter on Bus
-                                </button>
+                                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                    <label class="auto-follow-label" title="Automatically pan map as bus moves">
+                                        <input type="checkbox" id="toggle-auto-follow" checked />
+                                        <span id="auto-follow-label-text">Auto-Follow</span>
+                                    </label>
+                                    <button id="btn-recenter-bus" class="btn-recenter-map" type="button" title="Recenter Map on Active Bus">
+                                        <span>🎯</span> Recenter
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -646,20 +657,20 @@
                             Mohan Nagar Metro Station
                         </div>
                         <div id="driver-gps-coords-display" style="font-size:0.8rem; color:var(--text-muted); margin-top:6px; font-family:monospace;">
-                            GPS Broadcast: Inactive &bull; Click "Start Trip / Share Live Location" to transmit
+                            GPS Broadcast: Inactive &bull; Click "Start Trip / Broadcast Live GPS" to transmit
                         </div>
                     </div>
 
                     <!-- Action Controls -->
                     <div class="driver-actions-row">
                         <button id="btn-driver-start" class="btn-trip-action btn-trip-start">
-                            <span>▶</span> Start Trip / Share Live Location
+                            <span>▶</span> Start Trip / Broadcast Live GPS
                         </button>
                         <button id="btn-driver-next" class="btn-trip-action btn-trip-next">
                             <span>⏩</span> Next Stop
                         </button>
                         <button id="btn-driver-stop" class="btn-trip-action btn-trip-stop">
-                            <span>⏹</span> Complete Trip
+                            <span>⏹</span> Stop Trip
                         </button>
                     </div>
                 </div>

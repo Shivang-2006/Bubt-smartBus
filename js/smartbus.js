@@ -228,17 +228,21 @@ class SmartBusApp {
         this.driverFallbackTimer = null;
         this.lastDriverBroadcastTime = 0;
         this.telemetryChannel = null;
+        this.apiPollingTimer = null;
         this.feedMode = 'SIMULATED';
         this.lastLiveTelemetryTime = 0;
         this.currentSimulationWaypointIndex = 0;
         this.simulatedWaypoints = [];
         this.activeBusCurrentCoords = [28.6788, 77.3828]; // Mohan Nagar default
+        this.autoFollowBus = true;
+        this.currentHeading = 45;
 
         this.init();
     }
 
     init() {
         this.initTelemetrySync();
+        this.startRemoteTelemetryPolling();
         this.prepareSimulationWaypoints();
         this.bindEvents();
         this.handleRoute();
@@ -834,6 +838,19 @@ class SmartBusApp {
         return R * c;
     }
 
+    calculateBearing(lat1, lon1, lat2, lon2) {
+        const toRad = Math.PI / 180;
+        const toDeg = 180 / Math.PI;
+        const phi1 = lat1 * toRad;
+        const phi2 = lat2 * toRad;
+        const deltaLambda = (lon2 - lon1) * toRad;
+
+        const y = Math.sin(deltaLambda) * Math.cos(phi2);
+        const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(deltaLambda);
+        const theta = Math.atan2(y, x);
+        return (theta * toDeg + 360) % 360;
+    }
+
     prepareSimulationWaypoints() {
         const routes = this.store.getRoutes();
         const selectedRoute = routes.find(r => r.id === this.currentRouteId) || routes[0];
@@ -873,7 +890,7 @@ class SmartBusApp {
         }
     }
 
-    // ── Telemetry Channel & Real-Time Sync ──
+    // ── Telemetry Channel & Real-Time Sync (Cross-Device & Cross-Tab) ──
     initTelemetrySync() {
         if (typeof BroadcastChannel !== 'undefined') {
             try {
@@ -908,18 +925,59 @@ class SmartBusApp {
         } catch (err) {}
     }
 
+    startRemoteTelemetryPolling() {
+        if (this.apiPollingTimer) clearInterval(this.apiPollingTimer);
+
+        this.apiPollingTimer = setInterval(async () => {
+            if (document.hidden) return;
+
+            try {
+                const res = await fetch(`/api/telemetry?busId=${this.currentRouteId || 'bus_101'}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.success && data.telemetry) {
+                        const t = data.telemetry;
+                        if (t.isLive && Date.now() - t.timestamp < 15000) {
+                            this.onTelemetryReceived(t);
+                        }
+                    }
+                }
+            } catch (e) {
+                // Ignore transient network errors
+            }
+        }, 2500);
+    }
+
+    broadcastDriverLocation(payload) {
+        this.broadcastTelemetry(payload);
+    }
+
     broadcastTelemetry(payload) {
+        // 1. BroadcastChannel API for same-browser tabs
         if (this.telemetryChannel) {
             try {
                 this.telemetryChannel.postMessage(payload);
             } catch (e) {}
         }
+
+        // 2. localStorage for cross-window / tab persistence
         try {
             localStorage.setItem('smartbus_live_telemetry', JSON.stringify(payload));
         } catch (e) {}
 
-        // Also deliver locally to self in case student view is in same window
+        // 3. Local callback to self
         this.onTelemetryReceived(payload);
+
+        // 4. Remote Serverless API sync (cross-device over internet)
+        if (typeof fetch !== 'undefined') {
+            try {
+                fetch('/api/telemetry', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(() => {});
+            } catch (e) {}
+        }
     }
 
     onTelemetryReceived(data) {
@@ -931,13 +989,25 @@ class SmartBusApp {
             this.lastLiveTelemetryTime = data.timestamp || Date.now();
             this.updateFeedModeBadge('LIVE');
 
+            // Hide simulate button if visible
+            const btnSim = document.getElementById('btn-toggle-sim');
+            if (btnSim) btnSim.style.display = 'none';
+
+            // Convert speed if in m/s (meters per second) or km/h
+            let speedKmh = 30;
+            if (data.speedKmh != null) {
+                speedKmh = data.speedKmh;
+            } else if (data.speed != null) {
+                speedKmh = Math.round(data.speed * 3.6);
+            }
+
             // Update bus position smoothly
-            this.updateBusLocationOnMap([data.lat, data.lng], data.speedKmh || 32, true);
+            this.updateBusLocationOnMap([data.lat, data.lng], speedKmh, true, null, data.heading);
         } else if (!data.isLive) {
             // Driver ended trip
             if (this.feedMode === 'LIVE') {
-                this.feedMode = 'SIMULATED';
-                this.updateFeedModeBadge('SIMULATED');
+                this.feedMode = 'STALE';
+                this.updateFeedModeBadge('STALE');
             }
         }
     }
@@ -945,15 +1015,29 @@ class SmartBusApp {
     updateFeedModeBadge(mode) {
         const badgeEl = document.getElementById('map-feed-mode-badge');
         const textEl = document.getElementById('feed-mode-text');
+        const btnSim = document.getElementById('btn-toggle-sim');
         if (!badgeEl || !textEl) return;
 
         if (mode === 'LIVE') {
             badgeEl.className = 'map-feed-badge feed-live';
             textEl.textContent = '🟢 Live GPS Feed';
+            if (btnSim) btnSim.style.display = 'none';
+        } else if (mode === 'STALE') {
+            badgeEl.className = 'map-feed-badge feed-stale';
+            textEl.textContent = '⚠️ Driver signal paused / GPS lost';
+            if (btnSim) btnSim.style.display = 'inline-flex';
         } else {
             badgeEl.className = 'map-feed-badge feed-simulated';
             textEl.textContent = '🟡 Simulated Telemetry';
+            if (btnSim) btnSim.style.display = 'none';
         }
+    }
+
+    enableSimulatedMovement() {
+        this.feedMode = 'SIMULATED';
+        this.updateFeedModeBadge('SIMULATED');
+        this.currentSimulationWaypointIndex = 0;
+        this.showToast('Simulated movement enabled for testing.', 'info');
     }
 
     // ── Interactive Leaflet Map & Smooth Consumer ──
@@ -980,6 +1064,17 @@ class SmartBusApp {
                 subdomains: ['a', 'b', 'c'],
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
             }).addTo(this.map);
+
+            // Pause auto-follow if user drags map manually
+            this.map.on('dragstart', () => {
+                if (this.autoFollowBus) {
+                    this.autoFollowBus = false;
+                    const chk = document.getElementById('toggle-auto-follow');
+                    if (chk) chk.checked = false;
+                    const label = document.getElementById('auto-follow-label-text');
+                    if (label) label.textContent = 'Auto-Follow (Off)';
+                }
+            });
 
             this.updateInteractiveMap(true);
         }
@@ -1046,9 +1141,17 @@ class SmartBusApp {
         this.updateBusLocationOnMap(initialCoords, 32, this.feedMode === 'LIVE');
     }
 
-    updateBusLocationOnMap(coords, speedKmh = 30, isLive = false, overrideNextStopIndex = null) {
+    updateBusLocationOnMap(coords, speedKmh = 30, isLive = false, overrideNextStopIndex = null, heading = null) {
         if (!coords || !coords[0] || !coords[1]) return;
+        const prevCoords = this.activeBusCurrentCoords || coords;
         this.activeBusCurrentCoords = coords;
+
+        // Calculate heading / bearing
+        if (heading != null && !isNaN(heading) && heading > 0) {
+            this.currentHeading = heading;
+        } else if (prevCoords[0] !== coords[0] || prevCoords[1] !== coords[1]) {
+            this.currentHeading = this.calculateBearing(prevCoords[0], prevCoords[1], coords[0], coords[1]);
+        }
 
         const routes = this.store.getRoutes();
         const selectedRoute = routes.find(r => r.id === this.currentRouteId) || routes[0];
@@ -1059,7 +1162,9 @@ class SmartBusApp {
             if (!this.activeBusMarker) {
                 const busIconHtml = `
                     <div style="background:#3b82f6; color:#fff; width:40px; height:40px; border-radius:50%; border:3px solid #fff; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 0 20px rgba(59,130,246,0.8); animation:pulse 1.8s infinite;">
-                        🚌
+                        <div id="bus-marker-rotator" class="bus-marker-rotator" style="transform: rotate(${Math.round(this.currentHeading)}deg);">
+                            🚌
+                        </div>
                     </div>
                 `;
                 const busIcon = L.divIcon({
@@ -1071,6 +1176,15 @@ class SmartBusApp {
                 this.activeBusMarker = L.marker([coords[0], coords[1]], { icon: busIcon }).addTo(this.map);
             } else {
                 this.animateMarkerTo(coords, 1800);
+                const rotator = document.getElementById('bus-marker-rotator');
+                if (rotator) {
+                    rotator.style.transform = `rotate(${Math.round(this.currentHeading)}deg)`;
+                }
+            }
+
+            // Auto-follow pan
+            if (this.autoFollowBus) {
+                this.map.panTo(coords, { animate: true, duration: 0.8 });
             }
         }
 
@@ -1086,7 +1200,7 @@ class SmartBusApp {
                     closestIdx = i;
                 }
             }
-            if (minDistance < 0.15 && closestIdx < stops.length - 1) {
+            if (minDistance < 0.2 && closestIdx < stops.length - 1) {
                 nextStopIndex = closestIdx + 1;
             } else {
                 nextStopIndex = closestIdx;
@@ -1104,8 +1218,9 @@ class SmartBusApp {
             distanceToCampusKm += this.calculateHaversineDistance(stops[k].lat, stops[k].lng, stops[k + 1].lat, stops[k + 1].lng);
         }
 
-        // Dynamic ETA calculation
-        const effectiveSpeed = speedKmh > 8 ? speedKmh : 25;
+        // Dynamic ETA calculation:
+        // ETA (minutes) = (Distance remaining (km) / max(Speed (km/h), 15)) * 60
+        const effectiveSpeed = Math.max(speedKmh || 0, 15);
         const etaMinutes = Math.max(1, Math.round((distanceToCampusKm / effectiveSpeed) * 60));
 
         // Update telemetry card
@@ -1140,6 +1255,7 @@ class SmartBusApp {
                     </div>
                     <div style="font-size:11px; color:#475569; margin-top:4px;">Approaching: <strong>${currentTargetStop.name}</strong></div>
                     <div style="font-size:11px; color:#475569;">Speed: <strong>${speedKmh} km/h</strong></div>
+                    <div style="font-size:11px; color:#475569;">Heading: <strong>${Math.round(this.currentHeading)}°</strong></div>
                     <div style="font-size:11px; color:#475569;">Distance to Campus: <strong>${distanceToCampusKm.toFixed(1)} km</strong></div>
                 </div>
             `);
@@ -1194,10 +1310,16 @@ class SmartBusApp {
 
     recenterOnBus() {
         if (!this.map) return;
+        this.autoFollowBus = true;
+        const chk = document.getElementById('toggle-auto-follow');
+        if (chk) chk.checked = true;
+        const label = document.getElementById('auto-follow-label-text');
+        if (label) label.textContent = 'Auto-Follow';
+
         if (this.activeBusMarker) {
             const pos = this.activeBusMarker.getLatLng();
             this.map.panTo(pos, { animate: true, duration: 0.8 });
-            this.showToast('Centered map on active bus', 'info');
+            this.showToast('Centered on active bus (Auto-follow resumed)', 'info');
         } else if (this.activeBusCurrentCoords) {
             this.map.panTo(this.activeBusCurrentCoords, { animate: true, duration: 0.8 });
         }
@@ -1206,22 +1328,26 @@ class SmartBusApp {
     startBusSimulation() {
         if (this.busSimulationTimer) clearInterval(this.busSimulationTimer);
 
-        // Advance simulation every 2000ms if no live GPS feed
+        // Advance simulation or check stale every 2000ms
         this.busSimulationTimer = setInterval(() => {
             const now = Date.now();
-            const hasRecentLiveFeed = (this.feedMode === 'LIVE' && (now - this.lastLiveTelemetryTime < 12000));
 
-            if (hasRecentLiveFeed) {
-                // Live broadcast is active from driver! Simulation does not advance marker.
+            if (this.feedMode === 'LIVE') {
+                const elapsed = now - this.lastLiveTelemetryTime;
+                if (elapsed > 15000) {
+                    // Stale connection (> 15 seconds without GPS updates)
+                    this.feedMode = 'STALE';
+                    this.updateFeedModeBadge('STALE');
+                }
                 return;
             }
 
-            // Switch back to simulation mode
-            if (this.feedMode !== 'SIMULATED') {
-                this.feedMode = 'SIMULATED';
-                this.updateFeedModeBadge('SIMULATED');
+            if (this.feedMode === 'STALE') {
+                // Waiting for driver to resume or student to click "Enable Simulated Movement"
+                return;
             }
 
+            // SIMULATED mode
             if (!this.simulatedWaypoints || this.simulatedWaypoints.length === 0) {
                 this.prepareSimulationWaypoints();
             }
@@ -1230,7 +1356,7 @@ class SmartBusApp {
             this.currentSimulationWaypointIndex = (this.currentSimulationWaypointIndex + 1) % this.simulatedWaypoints.length;
             const wp = this.simulatedWaypoints[this.currentSimulationWaypointIndex];
 
-            // Only update UI if student dashboard or details tab is visible
+            // Only update UI if student dashboard is visible
             const studentView = document.getElementById('view-student');
             if (studentView && studentView.style.display !== 'none') {
                 this.updateBusLocationOnMap([wp.lat, wp.lng], wp.speedKmh, false, wp.nextStopIndex);
@@ -1322,7 +1448,7 @@ class SmartBusApp {
                 gpsPillEl.style.background = 'rgba(16,185,129,0.2)';
                 gpsPillEl.style.color = '#10b981';
                 gpsPillEl.style.border = '1px solid #10b981';
-                gpsPillEl.innerHTML = '<span class="pulse-dot"></span> 📡 Transmitting GPS';
+                gpsPillEl.innerHTML = '<span class="pulse-dot"></span> 📡 Transmitting Live GPS';
             } else {
                 gpsPillEl.className = 'badge-status badge-status--idle';
                 gpsPillEl.style.display = 'inline-block';
@@ -1335,10 +1461,10 @@ class SmartBusApp {
 
         if (startBtn) {
             if (this.driverActiveTrip) {
-                startBtn.innerHTML = '<span>⏸</span> Stop / Pause Live Location';
+                startBtn.innerHTML = '<span>⏹</span> Stop Trip';
                 startBtn.classList.add('is-active');
             } else {
-                startBtn.innerHTML = '<span>▶</span> Start Trip / Share Live Location';
+                startBtn.innerHTML = '<span>▶</span> Start Trip / Broadcast Live GPS';
                 startBtn.classList.remove('is-active');
             }
         }
@@ -1356,7 +1482,7 @@ class SmartBusApp {
         this.store.saveBuses(buses);
 
         this.driverActiveTrip = true;
-        this.showToast('Trip started! Broadcasting real-time GPS coordinates.', 'success');
+        this.showToast('Trip started! Broadcasting live GPS coordinates.', 'success');
         this.renderDriverController();
 
         this.startDriverGeolocation(bus);
@@ -1373,44 +1499,43 @@ class SmartBusApp {
             this.driverWatchId = navigator.geolocation.watchPosition(
                 (pos) => {
                     const now = Date.now();
+                    // Debounce/throttle network updates every 2-3 seconds
                     if (now - this.lastDriverBroadcastTime < 2000) return;
                     this.lastDriverBroadcastTime = now;
 
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    const speedKmh = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 32;
-                    const heading = pos.coords.heading || 0;
-                    const accuracy = Math.round(pos.coords.accuracy || 8);
+                    const { latitude, longitude, speed, heading, accuracy } = pos.coords;
+                    const speedKmh = speed ? Math.round(speed * 3.6) : 32;
 
                     const payload = {
                         busId: bus.id,
                         busNumber: bus.busNumber,
                         routeId: bus.routeId || this.currentRouteId,
-                        lat: lat,
-                        lng: lng,
+                        lat: latitude,
+                        lng: longitude,
+                        speed: speed || 0,
                         speedKmh: speedKmh,
-                        heading: heading,
-                        accuracy: accuracy,
+                        heading: heading || 0,
+                        accuracy: Math.round(accuracy || 8),
                         isLive: true,
                         timestamp: now
                     };
 
-                    this.broadcastTelemetry(payload);
+                    this.broadcastDriverLocation(payload);
 
                     const displayEl = document.getElementById('driver-gps-coords-display');
                     if (displayEl) {
-                        displayEl.textContent = `📡 Live GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)} • Speed: ${speedKmh} km/h • Acc: ±${accuracy}m`;
+                        displayEl.textContent = `📡 Live GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} • Speed: ${speedKmh} km/h • Heading: ${Math.round(heading || 0)}°`;
                     }
                 },
                 (err) => {
-                    console.warn('Geolocation watchPosition notice:', err);
+                    console.warn('Geolocation error:', err);
                     this.showToast(`GPS Notice: ${err.message}. Activating simulated route broadcaster.`, 'warning');
                     this.startDriverFallbackBroadcaster(bus);
                 },
                 {
                     enableHighAccuracy: true,
-                    timeout: 5000,
-                    maximumAge: 0
+                    maximumAge: 0,
+                    timeout: 5000
                 }
             );
         } else {
@@ -1458,6 +1583,7 @@ class SmartBusApp {
                 routeId: route.id,
                 lat: wp.lat,
                 lng: wp.lng,
+                speed: wp.speed / 3.6,
                 speedKmh: wp.speed,
                 heading: 45,
                 accuracy: 5,
@@ -1465,7 +1591,7 @@ class SmartBusApp {
                 timestamp: now
             };
 
-            this.broadcastTelemetry(payload);
+            this.broadcastDriverLocation(payload);
 
             const displayEl = document.getElementById('driver-gps-coords-display');
             if (displayEl) {
@@ -1510,7 +1636,7 @@ class SmartBusApp {
         this.store.saveBuses(buses);
 
         // Notify subscribers that live broadcast ended
-        this.broadcastTelemetry({
+        this.broadcastDriverLocation({
             busId: bus.id,
             isLive: false,
             timestamp: Date.now()
@@ -1521,7 +1647,7 @@ class SmartBusApp {
 
         const displayEl = document.getElementById('driver-gps-coords-display');
         if (displayEl) {
-            displayEl.textContent = 'GPS Broadcast: Inactive • Click "Start Trip / Share Live Location" to transmit';
+            displayEl.textContent = 'GPS Broadcast: Inactive • Click "Start Trip / Broadcast Live GPS" to transmit';
         }
 
         this.showToast('Trip completed. Live GPS transmission stopped.', 'info');
@@ -1916,6 +2042,20 @@ class SmartBusApp {
 
         // Recenter Map on Bus Action
         document.getElementById('btn-recenter-bus')?.addEventListener('click', () => this.recenterOnBus());
+
+        // Auto-Follow Toggle & Enable Simulated Movement
+        document.getElementById('toggle-auto-follow')?.addEventListener('change', (e) => {
+            this.autoFollowBus = e.target.checked;
+            const label = document.getElementById('auto-follow-label-text');
+            if (label) label.textContent = this.autoFollowBus ? 'Auto-Follow' : 'Auto-Follow (Off)';
+            if (this.autoFollowBus && this.activeBusCurrentCoords && this.map) {
+                this.map.panTo(this.activeBusCurrentCoords, { animate: true, duration: 0.8 });
+            }
+        });
+
+        document.getElementById('btn-toggle-sim')?.addEventListener('click', () => {
+            this.enableSimulatedMovement();
+        });
 
         // Driver Actions
         document.getElementById('btn-driver-start')?.addEventListener('click', () => this.driverStartTrip());
